@@ -23,29 +23,55 @@ for (const filePath of mdFilePathArr) {
 
 
 const getFileContent = (filePath) => {
-
   let fileContent;
-
-  
   readFile(filePath, 'utf8', (err, data) => {
     if (data) {
       fileContent = data;
-      printFileContent(data);
+      printFileContent(data, filePath);
     } else {
       console.error(err);
     }
-  })
-  
-
-  
+  }) 
 }
 
-const printFileContent = (data) => {
+const printFileContent = (data, sourceFilePath) => {
   console.log('\n');
-  console.log('content of first file: ');
+  console.log('Content of first file: ');
+  console.log('\n');
+  console.log(data); 
   console.log('\n');
 
-  console.log(data);
+  let i = 1;
+  const newLineSplitArr = data.split('\n').map(l => {
+    const result = {
+      line: i,
+      contentArr: l.split(' ')
+    }
+
+    i += 1;
+    return result;
+  });
+
+  console.log(newLineSplitArr);
+
+  const rawContentArr = [];
+  for (const lineObj of newLineSplitArr) {
+    for (const contentE of lineObj.contentArr) {
+      rawContentArr.push(
+        {
+          [contentE]: {
+            file: sourceFilePath,
+            line: lineObj.line 
+          }
+        }
+      );
+    }
+  }
+
+  console.log('raw: ', rawContentArr);
+  // const processedArr = newLineSplitArr.map(e => [`${e.cont.toString().toLowerCase()}`, sourceFilePath]);
+
+  // console.log('-> searching for "let": ', stringifiedObj['let'])
 }
 
 getFileContent(mdFilePathArr[0]);
