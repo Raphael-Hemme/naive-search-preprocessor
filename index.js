@@ -57,14 +57,16 @@ const printFileContent = (data, sourceFilePath) => {
   const rawContentArr = [];
   for (const lineObj of newLineSplitArr) {
     for (const contentE of lineObj.contentArr) {
-      rawContentArr.push(
-        {
-          [contentE]: {
-            file: sourceFilePath,
-            line: lineObj.line 
+      if (contentE && /^(?=.*[A-Za-z0-9]).+$/.test(contentE)) {
+        rawContentArr.push(
+          {
+            [contentE]: {
+              file: sourceFilePath,
+              line: lineObj.line 
+            }
           }
-        }
-      );
+        );
+      }
     }
   }
 
