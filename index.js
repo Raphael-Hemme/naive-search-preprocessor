@@ -31,6 +31,7 @@ const getFileContent = (filePath) => {
     if (data) {
       printFileContent(data, filePath);
       const cleanedLineSplitArr = generateCleanedLineSplitArr(data);
+      // 
       const indexObj = generateIndexObj(cleanedLineSplitArr, filePath);
       console.log(indexObj);
     } else {
@@ -43,21 +44,34 @@ const generateCleanedLineSplitArr = (data) => {
 
   let i = 1;
   const newLineSplitArr = data.split('\n').map(l => {
-    const cleanedLineStr = cleanUpLineStr(l)
+    const cleanedLineStr = cleanUpLineStr(l);
+    const cleanedLineStrArr = cleanedLineStr.split(' ');
+    const cleanedLineStrPartialsArr = cleanedLineStrArr.map(el => generatePartialEntries(el)).flat();
     console.log(i, cleanedLineStr)
 
     const result = {
       line: i,
-      contentArr: cleanedLineStr.split(' ')
+      contentArr: cleanedLineStrPartialsArr
     }
 
     i += 1;
     return result;
   });
 
-  console.log(newLineSplitArr);
+  // console.log('newLineSplitArr: ', newLineSplitArr);
   return newLineSplitArr;
 }
+
+const generatePartialEntries = (entry) => {
+  const partialsArr = [];
+  for (let strLen = entry.length; strLen > 0; strLen--) {
+    partialsArr.push(entry.slice(0, strLen));
+  };
+  // console.log(partialsArr);
+  return(partialsArr);
+}
+
+// generatePartialEntries('test');
 
 const cleanUpLineStr = (lineStr) => {
   return lineStr
@@ -72,16 +86,18 @@ const generateIndexObj = (cleanedLineSplitArr, sourceFilePath) => {
     for (const contentE of lineObj.contentArr) {
       if (contentE) {
         indexArr.push(
-          {
-            [contentE]: {
+          [
+            contentE,
+            {
               file: sourceFilePath,
               line: lineObj.line 
             }
-          }
+          ]
         );
       }
     }
   }
+
   return Object.fromEntries(indexArr);
 }
 
