@@ -5,10 +5,12 @@ const matchSymbolsRegEx = /[^a-zA-Z0-9. ]/g;
 const matchMultipleSpaceRegEx = /\s{2,}/g;
 
 
-console.log('\n')
-console.log('-- NAIVE SEARCH PREPROCESSOR --')
-console.log('\n')
-console.log('... collecting files')
+const printFrontMatter = () => {
+  console.log('\n')
+  console.log('-- NAIVE SEARCH PREPROCESSOR --')
+  console.log('\n')
+  console.log('... collecting files') 
+}
 
 const generateFilePathArr = (dir) => {
   const fileNameArr = readdirSync(dir);
@@ -85,21 +87,23 @@ const generatePreIndexObjArr = (cleanedLineSplitArr, sourceFilePath) => {
   const indexArr = [];
   for (const lineObj of cleanedLineSplitArr) {
     for (const contentE of lineObj.contentArr) {
-      if (contentE) {
-        indexArr.push(
-          [
-            contentE,
-            {
-              file: sourceFilePath,
-              line: lineObj.line 
-            }
-          ]
-        );
-      }
+      indexArr.push(
+        [
+          contentE,
+          {
+            file: sourceFilePath,
+            line: lineObj.line 
+          }
+        ]
+      );
     }
   }
 
-  return indexArr;
+  const cleanedIndexArr = indexArr.filter(el => el[0]);
+
+
+
+  return cleanedIndexArr;
   // return Object.fromEntries(indexArr);
 }
 
