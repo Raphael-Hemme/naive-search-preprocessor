@@ -19,7 +19,7 @@ const generateFilePathArr = (dir) => {
 
 const mdFilePathArr = generateFilePathArr('./blog-posts');
 const preIndexObjArr = [];
-
+let uniqueKeysArr = [];
 
 console.log('...found the following files: ');
 console.log('\n')
@@ -35,7 +35,7 @@ const getFileContent = (filePath) => {
       // printFileContent(data, filePath);
       const cleanedLineSplitArr = generateCleanedLineSplitArr(data);
       // const indexObj = generateIndexObj(cleanedLineSplitArr, filePath);
-      console.log('test ---- pushing now');
+      console.log('---- pushing now');
       preIndexObjArr.push(...generatePreIndexObjArr(cleanedLineSplitArr, filePath))
     } else {
       console.error(err);
@@ -87,24 +87,47 @@ const generatePreIndexObjArr = (cleanedLineSplitArr, sourceFilePath) => {
   const indexArr = [];
   for (const lineObj of cleanedLineSplitArr) {
     for (const contentE of lineObj.contentArr) {
+      /*
+       * Push the content entry into the index array - itself formatted as an array of the string and an array
+       * with one object as its only entry that contains the source file and line number. Putting this source object
+       * into an arry will help later when filtering for duplicate string entries - which will become the search keys
+       * in an index object. Because we can't have identical keys, we need to reduce all identical keys over all file
+       * arrays and push the source objects into an array so each key can have multiple matching sources. 
+       */
       indexArr.push(
         [
           contentE,
-          {
-            file: sourceFilePath,
-            line: lineObj.line 
-          }
+          [
+            {
+              file: sourceFilePath,
+              line: lineObj.line 
+            }
+          ]
         ]
       );
     }
   }
 
   const cleanedIndexArr = indexArr.filter(el => el[0]);
+  const reducedArr = reduceToUniqueKeys(cleanedIndexArr);
 
+  return reducedArr;
+}
 
-
-  return cleanedIndexArr;
-  // return Object.fromEntries(indexArr);
+const reduceToUniqueKeys = (inputArr) => {
+  const reducedArr = [];
+  for (const potReoccuringE of inputArr) {
+    const duplicateKeyEntrysArr = inputArr.filter(el => el[0] === potReoccuringE[0]);
+    if (duplicateKeyEntrysArr.length > 0) {
+      reducedArr.push([
+        potReoccuringE[0],
+        duplicateKeyEntrysArr.map(el => el[1])
+      ]);
+    } else {
+      reducedArr.push(potReoccuringE);
+    }
+  }
+  return reducedArr;
 }
 
 const printFileContent = (data) => {
@@ -141,10 +164,15 @@ setTimeout(() => {
   
   setTimeout(() => {
     if (mdFilePathArrIterator === 0 && preIndexObjArr.length > 0) {
-      writeSearchIndexObjToJsonFile(Object.fromEntries(preIndexObjArr));
+      console.log('...processing indexes and collecting sources');
+      uniqueKeysArr = reduceToUniqueKeys(preIndexObjArr);
       // console.log('finally got: ', Object.fromEntries(preIndexObjArr));
     }
-  }, 2000);
+  }, 5000);
+
+  setTimeout(() => {
+    writeSearchIndexObjToJsonFile(Object.fromEntries(uniqueKeysArr));
+  }, 20000)
 
 }, 100)
 
