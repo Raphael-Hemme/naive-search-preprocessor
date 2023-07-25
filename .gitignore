@@ -132,3 +132,4 @@ dist
 # Other stuff
 .DS_Store
 blog-posts/
+search-index.json
