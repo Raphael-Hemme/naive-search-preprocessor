@@ -1,16 +1,8 @@
 import { readFile, readdirSync, writeFile } from 'fs';
 
-
 const matchSymbolsRegEx = /[^a-zA-Z0-9. ]/g;
 const matchMultipleSpaceRegEx = /\s{2,}/g;
 
-
-const printFrontMatter = () => {
-  console.log('\n')
-  console.log('-- NAIVE SEARCH PREPROCESSOR --')
-  console.log('\n')
-  console.log('... collecting files') 
-}
 
 const generateFilePathArr = (dir) => {
   const fileNameArr = readdirSync(dir);
@@ -20,13 +12,21 @@ const generateFilePathArr = (dir) => {
 const mdFilePathArr = generateFilePathArr('./blog-posts');
 const preIndexObjArr = [];
 let uniqueKeysArr = [];
+let cleanedPreObjArr = [];
 
-console.log('...found the following files: ');
-console.log('\n')
 
-for (const filePath of mdFilePathArr) {
-  console.log(filePath);
-};
+
+
+const printFrontMatter = () => {
+  console.log('\n')
+  console.log('-- NAIVE SEARCH PREPROCESSOR --')
+  console.log('\n')
+  console.log('... collecting files') 
+  console.log('\n')
+}
+
+
+
 
 
 const getFileContent = (filePath) => {
@@ -94,7 +94,7 @@ const generatePreIndexObjArr = (cleanedLineSplitArr, sourceFilePath) => {
           [
             {
               file: sourceFilePath,
-              line: lineObj.line 
+              line: lineObj.line
             }
           ]
         ]
@@ -109,11 +109,12 @@ const generatePreIndexObjArr = (cleanedLineSplitArr, sourceFilePath) => {
 }
 
 const reduceToUniqueKeys = (inputArr, isFullArr = false) => {
+
   const reducedArr = [];
   for (const potReoccuringE of inputArr) {
     const duplicateKeyEntrysArr = inputArr.filter(el => el[0] === potReoccuringE[0]);
     const subArrToPush = duplicateKeyEntrysArr.map(el => isFullArr ? el[1] : el[1].flat()).flat();
-    if (duplicateKeyEntrysArr.length > 0) {
+    if (duplicateKeyEntrysArr.length > 0 ) {
       reducedArr.push([
         potReoccuringE[0],
         subArrToPush
@@ -124,6 +125,15 @@ const reduceToUniqueKeys = (inputArr, isFullArr = false) => {
   }
   return reducedArr;
 }
+
+const removeDuplicateValueObjs = (inputArr) => {
+  return inputArr.map(el => {
+    return [
+      el[0],
+      [...new Set(el[1])]
+    ]
+  })
+} 
 
 const printFileContent = (data) => {
   console.log('\n');
@@ -145,26 +155,48 @@ const writeSearchIndexObjToJsonFile = (searchIndexObj) => {
 }
 
 
-setTimeout(() => {
-  let mdFilePathArrIterator = mdFilePathArr.length;
-  console.log('-> Files to process: ', mdFilePathArrIterator)
 
-  for (const path of mdFilePathArr) {
-    getFileContent(path);
-    mdFilePathArrIterator -= 1;
-  }
+const main = () => {
+  printFrontMatter()
+
+  console.log('...found the following files: ');
+  console.log('\n')
+
+  for (const filePath of mdFilePathArr) {
+    console.log(filePath);
+  };
+  console.log('\n')
   
   setTimeout(() => {
-    if (mdFilePathArrIterator === 0 && preIndexObjArr.length > 0) {
-      console.log('processing full indexes and collecting sources...');
-      console.log('This will take a while. Thansk for your patience.');
-      uniqueKeysArr = reduceToUniqueKeys(preIndexObjArr, true);
+    let mdFilePathArrIterator = mdFilePathArr.length;
+    console.log('-> Files to process: ', mdFilePathArrIterator)
+
+    for (const path of mdFilePathArr) {
+      getFileContent(path);
+      mdFilePathArrIterator -= 1;
     }
-  }, 5000);
+    
+    setTimeout(() => {
+      if (mdFilePathArrIterator === 0 && preIndexObjArr.length > 0) {
+        console.log('Processing full indexes and collecting sources...');
+        console.log('This will take a while. Thansk for your patience.\n');
+        uniqueKeysArr = reduceToUniqueKeys(preIndexObjArr, true);
+      }
+    }, 5000);
 
-  setTimeout(() => {
-    writeSearchIndexObjToJsonFile(Object.fromEntries(uniqueKeysArr));
-  }, 20000)
+    setTimeout(() => {
+      console.log('Removing duplicate matches...');
+      console.log('Almost done now.\n');
+      cleanedPreObjArr = removeDuplicateValueObjs(uniqueKeysArr);
+    }, 20000)
 
-}, 100)
 
+    setTimeout(() => {
+      writeSearchIndexObjToJsonFile(Object.fromEntries(cleanedPreObjArr));
+    }, 25000)
+
+  }, 100)
+
+}
+
+main();
