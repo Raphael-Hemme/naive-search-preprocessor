@@ -32,10 +32,8 @@ for (const filePath of mdFilePathArr) {
 const getFileContent = (filePath) => {
   readFile(filePath, 'utf8', (err, data) => {
     if (data) {
-      // printFileContent(data, filePath);
       const cleanedLineSplitArr = generateCleanedLineSplitArr(data);
-      // const indexObj = generateIndexObj(cleanedLineSplitArr, filePath);
-      console.log('---- pushing now');
+      console.log('processing content of: ', filePath);
       preIndexObjArr.push(...generatePreIndexObjArr(cleanedLineSplitArr, filePath))
     } else {
       console.error(err);
@@ -49,19 +47,17 @@ const generateCleanedLineSplitArr = (data) => {
   const newLineSplitArr = data.split('\n').map(l => {
     const cleanedLineStr = cleanUpLineStr(l);
     const cleanedLineStrArr = cleanedLineStr.split(' ');
-    const cleanedLineStrPartialsArr = cleanedLineStrArr.map(el => generatePartialEntries(el)).flat();
-    // console.log(i, cleanedLineStr)
+    // const cleanedLineStrPartialsArr = cleanedLineStrArr.map(el => generatePartialEntries(el)).flat();
 
     const result = {
       line: i,
-      contentArr: cleanedLineStrPartialsArr
+      contentArr: cleanedLineStrArr
     }
 
     i += 1;
     return result;
   });
 
-  // console.log('newLineSplitArr: ', newLineSplitArr);
   return newLineSplitArr;
 }
 
@@ -70,11 +66,9 @@ const generatePartialEntries = (entry) => {
   for (let strLen = entry.length; strLen > 0; strLen--) {
     partialsArr.push(entry.slice(0, strLen));
   };
-  // console.log(partialsArr);
   return(partialsArr);
 }
 
-// generatePartialEntries('test');
 
 const cleanUpLineStr = (lineStr) => {
   return lineStr
@@ -114,14 +108,15 @@ const generatePreIndexObjArr = (cleanedLineSplitArr, sourceFilePath) => {
   return reducedArr;
 }
 
-const reduceToUniqueKeys = (inputArr) => {
+const reduceToUniqueKeys = (inputArr, isFullArr = false) => {
   const reducedArr = [];
   for (const potReoccuringE of inputArr) {
     const duplicateKeyEntrysArr = inputArr.filter(el => el[0] === potReoccuringE[0]);
+    const subArrToPush = duplicateKeyEntrysArr.map(el => isFullArr ? el[1] : el[1].flat()).flat();
     if (duplicateKeyEntrysArr.length > 0) {
       reducedArr.push([
         potReoccuringE[0],
-        duplicateKeyEntrysArr.map(el => el[1])
+        subArrToPush
       ]);
     } else {
       reducedArr.push(potReoccuringE);
@@ -152,21 +147,18 @@ const writeSearchIndexObjToJsonFile = (searchIndexObj) => {
 
 setTimeout(() => {
   let mdFilePathArrIterator = mdFilePathArr.length;
-  console.log('----------------->', mdFilePathArrIterator)
+  console.log('-> Files to process: ', mdFilePathArrIterator)
 
   for (const path of mdFilePathArr) {
-
     getFileContent(path);
     mdFilePathArrIterator -= 1;
-    console.log('iterator: ', mdFilePathArrIterator)
-
   }
   
   setTimeout(() => {
     if (mdFilePathArrIterator === 0 && preIndexObjArr.length > 0) {
-      console.log('...processing indexes and collecting sources');
-      uniqueKeysArr = reduceToUniqueKeys(preIndexObjArr);
-      // console.log('finally got: ', Object.fromEntries(preIndexObjArr));
+      console.log('processing full indexes and collecting sources...');
+      console.log('This will take a while. Thansk for your patience.');
+      uniqueKeysArr = reduceToUniqueKeys(preIndexObjArr, true);
     }
   }, 5000);
 
