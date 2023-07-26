@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/Raphael-Hemme/naive-search-preprocessor/issues"
   },
-  "homepage": "https://github.com/Raphael-Hemme/naive-search-preprocessor#readme"
+  "homepage": "https://github.com/Raphael-Hemme/naive-search-preprocessor#readme",
+  "dependencies": {
+    "rxjs": "^7.8.1"
+  }
 }
