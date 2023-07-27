@@ -1,8 +1,10 @@
 import { readFileSync, readdirSync, writeFile } from 'fs';
-import { tap, delay, of, map } from 'rxjs';
+import { tap, of, map } from 'rxjs';
 
 const matchSymbolsRegEx = /[^a-zA-Z0-9. ]/g;
 const matchMultipleSpaceRegEx = /\s{2,}/g;
+const matchMultipleDotRegEx = /\.{2,}/g;
+const cleanSearchEntryStrRegEx = /[^a-zA-Z0-9]/g;
 
 
 const generateFilePathArr = (dir) => {
@@ -21,11 +23,10 @@ const printFrontMatter = () => {
 }
 
 const printFilePaths = (filePathArr) => {
-  console.log('...found the following files: ');
-  console.log('\n')
+  console.log('Found the following', filePathArr.length, 'files: ');
   for (const filePath of filePathArr) {
-    console.log(filePath);
-  };
+    console.log('\t', filePath);
+  }
   console.log('\n')
 }
 
@@ -34,7 +35,6 @@ const generateCleanedLineSplitArr = (data) => {
   const newLineSplitArr = data.split('\n').map(l => {
     const cleanedLineStr = cleanUpLineStr(l);
     const cleanedLineStrArr = cleanedLineStr.split(' ');
-    // const cleanedLineStrPartialsArr = cleanedLineStrArr.map(el => generatePartialEntries(el)).flat();
 
     const result = {
       line: i,
@@ -64,20 +64,36 @@ const cleanUpLineStr = (lineStr) => {
     .trim();
 }
 
+
+const cleanSearchEntryStr = (searchEntryStr) => {
+  const strLen = searchEntryStr.length;
+  let cleanedStr = searchEntryStr.replaceAll(matchMultipleDotRegEx, '.');
+
+  if (cleanSearchEntryStrRegEx.test(searchEntryStr[strLen - 1])) {
+    cleanedStr = searchEntryStr.slice(0, strLen - 2);
+  } else if (cleanSearchEntryStrRegEx.test(searchEntryStr[0])) {
+    cleanedStr = searchEntryStr.slice(1);
+  } else {
+    cleanedStr = searchEntryStr;
+  }
+
+  return cleanedStr;
+}
+
 const generatePreIndexObjArr = (cleanedLineSplitArr, sourceFilePath) => {
   const indexArr = [];
   for (const lineObj of cleanedLineSplitArr) {
     for (const contentE of lineObj.contentArr) {
       /*
-       * Push the content entry into the index array - itself formatted as an array of the string and an array
+       * Push the content entry into the index array - itself formatted as an array of the string (the key) and an array
        * with one object as its only entry that contains the source file and line number. Putting this source object
-       * into an arry will help later when filtering for duplicate string entries - which will become the search keys
+       * into an arry will help later when filtering for duplicate string entries (keys) - which will become the search keys
        * in an index object. Because we can't have identical keys, we need to reduce all identical keys over all file
        * arrays and push the source objects into an array so each key can have multiple matching sources. 
        */
       indexArr.push(
         [
-          contentE,
+          cleanSearchEntryStr(contentE),
           [
             {
               file: sourceFilePath,
@@ -89,6 +105,7 @@ const generatePreIndexObjArr = (cleanedLineSplitArr, sourceFilePath) => {
     }
   }
 
+  // delete entries with emty strings (can happen when multiple space characters follow in a row and space is used as seperator)
   const cleanedIndexArr = indexArr.filter(el => el[0]);
   const reducedArr = reduceToUniqueKeys(cleanedIndexArr);
 
@@ -96,7 +113,6 @@ const generatePreIndexObjArr = (cleanedLineSplitArr, sourceFilePath) => {
 }
 
 const reduceToUniqueKeys = (inputArr, isFullArr = false) => {
-
   const reducedArr = [];
   for (const potReoccuringE of inputArr) {
     const duplicateKeyEntrysArr = inputArr.filter(el => el[0] === potReoccuringE[0]);
@@ -122,38 +138,29 @@ const removeDuplicateValueObjs = (inputArr) => {
   })
 } 
 
-const printFileContent = (data) => {
-  console.log('\n');
-  console.log('Content of first file: ');
-  console.log('\n');
-  console.log(data); 
-  console.log('\n');
-}
-
 const writeSearchIndexObjToJsonFile = (searchIndexObj) => {
   const jsonObj = JSON.stringify(searchIndexObj);
   writeFile('search-index.json', jsonObj, 'utf8', (err) => {
     if (err) {
       console.log('There has been an error: ', err);
+      console.log('\n');
     } else {
-      console.log('Contnet has been written to file.');
+      console.log('Content has been written to file.\n');
     }
   })
 }
 
-
 const main = () => {
-  
   of('start')
     .pipe(
       tap(() => printFrontMatter()),
       map(() => generateFilePathArr('./blog-posts')),
-      tap((filePathArr) => console.log('Sum of files to process: ', filePathArr.length)),
       tap((filePathArr) => printFilePaths(filePathArr)),
       map((filePathArr) => {
         const fileContentArr = [];
+        console.log('Reading files:')
         for (const filePath of filePathArr) {
-          console.log('Reading file: ', filePath)
+          console.log('\t', filePath)
           fileContentArr.push({
             fileContent: readFileSync(filePath, 'utf8'),
             filePath
@@ -163,23 +170,24 @@ const main = () => {
       }),
       map((fileContentArr) => {
         console.log('\n');
+        console.log('Processing content of: ');
         const resultArr = [];
         for (const file of fileContentArr) {
-          console.log('processing content of: ', file.filePath);
+          console.log('\t', file.filePath);
           const cleanedLineSplitArr = generateCleanedLineSplitArr(file.fileContent);
           resultArr.push(...generatePreIndexObjArr(cleanedLineSplitArr, file.filePath))
         }
         return resultArr;
       }),
       map((preIndexObjArr) => {
-        console.log('\nProcessing full indexes and collecting sources...');
-        console.log('This will take a while. Thansk for your patience.\n');
+        console.log('\n\nProcessing full indexes and collecting sources...');
+        console.log('This will take a while. Thanks for your patience.\n');
         const uniqueKeysArr = reduceToUniqueKeys(preIndexObjArr, true);
         return uniqueKeysArr;
       }),
       map((uniqueKeysArr) => {
-        console.log('Removing duplicate matches...');
-        console.log('Almost done now.\n');
+        console.log('\nRemoving duplicate matches...');
+        console.log('Almost done now.\n\n');
         const cleanedPreObjArr = removeDuplicateValueObjs(uniqueKeysArr);
         return cleanedPreObjArr; 
       }),
@@ -190,7 +198,5 @@ const main = () => {
     )
     .subscribe();
 }
-
-
 
 main();
