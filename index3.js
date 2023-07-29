@@ -202,35 +202,12 @@ const main = () => {
         return cleanedPreObjArr; 
       }),
       tap((cleanedPreObjArr) => {
-        // console.log('first entry in preObjArr before transform (0 - 3): ', cleanedPreObjArr[0])
-        
-        /*
         const indexArr = cleanedPreObjArr.map((el) => {
-          return {[`${el[0]}`]: el[1]}
+          return {
+            searchTerm: el[0],
+            searchResults: el[1]
+          };
         });
-
-        console.log('indexArr after transforming entries to objs (0 - 3): ', indexArr.slice(0, 3));
-        */
-
-        
-        const indexArr = cleanedPreObjArr.map((el) => {
-          // console.log('el', el);
-          return Object.fromEntries([el]);
-        });
-
-        console.log('cleanedPreObjArr length: ', cleanedPreObjArr.length);
-        console.log('first 500 entries: ', cleanedPreObjArr.map(el => el[0]).slice(0, 500));
-
-        const javaScriptEntries = cleanedPreObjArr.filter(el => el[0] === 'javascript');
-        console.log('entries for javascript: ', cleanedPreObjArr.filter(el => el[0] === 'javascript'));
-
-        // console.log('indexArr after transforming entries to objs (0 - 3): ', indexArr.slice(0, 3));
-        
-
-        const indexObj = Object.fromEntries(cleanedPreObjArr);
-        const indexObjKeys = Object.keys(indexObj);
-        console.log('indexObj length: ', indexObjKeys.length);
-        console.log('first 500 keys: ', indexObjKeys.slice(0, 500))
 
         writeSearchIndexObjToJsonFile(indexArr);
       })
