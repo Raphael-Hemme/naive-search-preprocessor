@@ -7,8 +7,11 @@ const matchMultipleDotRegEx = /\.{2,}/g;
 const cleanSearchEntryStrRegEx = /[^a-zA-Z0-9]/g;
 
 
-const generateFilePathArr = (dir) => {
-  const fileNameArr = readdirSync(dir);
+const generateFilePathArr = (dirArr) => {
+  const fileNameArr = [];
+  for (const dir of dirArr) {
+    fileNameArr.push(readdirSync(dir));
+  }
   return fileNameArr.map(fileName => `${dir}/${fileName}`);
 }
 
@@ -164,7 +167,7 @@ const main = () => {
   of('start')
     .pipe(
       tap(() => printFrontMatter()),
-      map(() => generateFilePathArr('./blog-posts')),
+      map(() => generateFilePathArr(['./blog-posts', './io-garden-expermiment-descriptions'])),
       tap((filePathArr) => printFilePaths(filePathArr)),
       map((filePathArr) => {
         const fileContentArr = [];

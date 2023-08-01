@@ -1,9 +1,12 @@
 import { of, take, interval, tap, map, concatMap, switchMap } from 'rxjs'; 
 
-const slowFn = async (input) => {
+const slowFn = (input) => {
   const randDelay = Math.floor(Math.random() * 3000)
-  await new Promise(resolve => setTimeout(resolve, randDelay));
-  return input.toUpperCase();
+  let result;
+  setTimeout(() => {
+    result = input.toUpperCase();
+  }, randDelay);
+  return result;
 }
 
 (() => {
@@ -14,7 +17,7 @@ const slowFn = async (input) => {
       return interval(1000).pipe(
         tap((i) => console.log(arr[i])),
         take(arr.length),
-        concatMap((i) => slowFn(arr[i])),
+        map((i) => slowFn(arr[i])),
       )
     }),
     tap((val) => console.log(val)),

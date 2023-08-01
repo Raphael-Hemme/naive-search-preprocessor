@@ -131,5 +131,8 @@ dist
 
 # Other stuff
 .DS_Store
+package-lock.json
+
 blog-posts/
+io-garden-experiment-descriptions/
 search-index.json
