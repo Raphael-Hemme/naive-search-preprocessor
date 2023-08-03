@@ -83,7 +83,7 @@ const cleanSearchEntryStr = (searchEntryStr) => {
     cleanedStr = searchEntryStr;
   }
 
-  return cleanedStr;
+  return cleanedStr.toLowerCase();
 }
 
 const generatePreIndexObjArr = (cleanedLineSplitArr, sourceFilePath) => {
@@ -120,25 +120,28 @@ const generatePreIndexObjArr = (cleanedLineSplitArr, sourceFilePath) => {
 
 const reduceToUniqueKeys = (inputArr, isFullArr = false) => {
   let reducedArr = [];
-  for (const potReoccuringE of inputArr) {
-    const duplicateKeyEntrysArr = inputArr.filter(el => el[0] === potReoccuringE[0]);
+  for (const preIndexArr of inputArr) {
+    const duplicateKeyEntrysArr = inputArr.filter(el => el[0] === preIndexArr[0]);
     const subArrToPush = duplicateKeyEntrysArr.map(el => isFullArr ? el[1] : el[1].flat()).flat();
     if (duplicateKeyEntrysArr.length > 0 ) {
       reducedArr.push([
-        potReoccuringE[0],
+        preIndexArr[0],
         subArrToPush
       ]);
     } else {
-      reducedArr.push(potReoccuringE);
+      reducedArr.push(preIndexArr);
     }
   }
   
-  if (isFullArr) {
+  // Has this really been the bug that caused node to run out of memory and crash?
+  // Because the per line arrays were not cleaned properly because of the condition below?
+  
+  // if (isFullArr) {
     const stringifiedArr = reducedArr.map(el => JSON.stringify(el))
     const reducedStringifiedArr = [...new Set(stringifiedArr)]
     reducedArr = reducedStringifiedArr.map(el => JSON.parse(el));
     console.log(reducedArr.length);
-  }
+  // }
 
   return reducedArr;
 };
@@ -186,16 +189,16 @@ const main = () => {
       }),
       map((fileContentArr) => {
         console.log('\n');
-        console.log('Processing content of: ');
+        console.log('Processing content of files...');
         const resultArr = [];
         for (const file of fileContentArr) {
-          console.log('\t', file.filePath);
           const cleanedLineSplitArr = generateCleanedLineSplitArr(file.fileContent);
           resultArr.push(...generatePreIndexObjArr(cleanedLineSplitArr, file.filePath))
         }
         return resultArr;
       }),
       map((preIndexObjArr) => {
+        console.log('array size before crash: ', preIndexObjArr[78][1])
         console.log('\n\nProcessing full indexes and collecting sources...');
         console.log('This will take a while. Thanks for your patience.\n');
         const uniqueKeysArr = reduceToUniqueKeys(preIndexObjArr, true);
