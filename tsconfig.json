@@ -5,7 +5,8 @@
         "removeComments": false,
         "preserveConstEnums": true,
         "target": "ESNext",
-        "sourceMap": true
+        "sourceMap": true,
+        "moduleResolution": "node"
     },
     "include": [
         "./**/*"

@@ -73,7 +73,10 @@ export const cleanSearchEntryStr = (searchEntryStr: string): string => {
     return cleanedStr.toLowerCase();
 }
 
-export const generatePreIndexObjArr = (cleanedLineSplitArr, sourceFilePath) => {
+export const generatePreIndexObjArr = (
+    cleanedLineSplitArr: LineSplitObj[],
+    sourceFilePath: string
+): SearchIndexEntryArrFormat[] => {
     const indexArr = [];
     for (const lineObj of cleanedLineSplitArr) {
         for (const contentE of lineObj.contentArr) {
@@ -105,7 +108,7 @@ export const generatePreIndexObjArr = (cleanedLineSplitArr, sourceFilePath) => {
     return reducedArr;
 }
 
-export const reduceToUniqueKeys = (inputArr, isFullArr = false) => {
+export const reduceToUniqueKeys = (inputArr: SearchIndexEntryArrFormat[], isFullArr = false) => {
     let reducedArr = [];
     for (const preIndexArr of inputArr) {
         const duplicateKeyEntrysArr = inputArr.filter(el => el[0] === preIndexArr[0]);
@@ -132,7 +135,7 @@ export const reduceToUniqueKeys = (inputArr, isFullArr = false) => {
     return reducedArr;
 };
 
-export const removeDuplicateValueObjs = (inputArr) => {
+export const removeDuplicateValueObjs = (inputArr: SearchIndexEntryArrFormat[]) => {
     return inputArr.map(el => {
         const stringifiedValueArr = el[1].map(e => JSON.stringify(e));
         const filteredValueArr = [...new Set(stringifiedValueArr)].map(el => JSON.parse(el));

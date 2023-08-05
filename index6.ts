@@ -3,6 +3,7 @@ import {
     readdirSync,
     writeFile 
     } from 'fs';
+    
 import { tap, of, map } from 'rxjs';
 
 
@@ -27,7 +28,6 @@ const generateFilePathArr = (dirArr: string[]): string[] => {
   }
   return fileNameArr.map(([dir, fileName]) => `${dir}/${fileName}`);
 }
-
 
 
 const writeSearchIndexObjToJsonFile = (searchIndexObj) => {
