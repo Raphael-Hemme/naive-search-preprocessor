@@ -6,11 +6,6 @@ const matchMultipleSpaceRegEx = /\s{2,}/g;
 const matchMultipleDotRegEx = /\.{2,}/g;
 const cleanSearchEntryStrRegEx = /[^a-zA-Z0-9]/g;
 
-// Don't use the stop list for now because it does not affect the index size signiginicantly.
-const stopList = [
-  'a', 'an', 'and', 'but', 'i', 'in', 'is', 'it', 'for', 'or', 'my', 'your', 'our', 'the', 'their'
-];
-
 
 const generateFilePathArr = (dirArr) => {
   const fileNameArr = [];
@@ -69,11 +64,6 @@ const generatePartialEntries = (entry) => {
 
 
 const cleanUpLineStr = (lineStr) => {
-  /* let resultStr = lineStr;
-  for (const stopWord of stopList) {
-    resultStr = resultStr.replaceAll(stopWord, '');
-  } */
-
   return lineStr
     .replaceAll(matchSymbolsRegEx, ' ')
     .replaceAll(matchMultipleSpaceRegEx, ' ')
