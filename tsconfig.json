@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "module": "System",
+        "noImplicitAny": true,
+        "removeComments": false,
+        "preserveConstEnums": true,
+        "target": "ESNext",
+        "sourceMap": true
+    },
+    "include": [
+        "./**/*"
+    ]
+}

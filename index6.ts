@@ -9,21 +9,16 @@ import { tap, of, map } from 'rxjs';
 import { printFrontMatter, printFilePaths } from './cli-output';
 import {
     cleanUpLineStr,
+    LineSplitObj,
     generatePreIndexObjArr,
     reduceToUniqueKeys,
     removeDuplicateValueObjs,
-    sortFinalIndexArr
+    sortFinalIndexArr,
+    generateCleanedLineSplitArr
 } from './data-processing';
 
-
-const matchSymbolsRegEx = /[^a-zA-Z0-9. ]/g;
-const matchMultipleSpaceRegEx = /\s{2,}/g;
-const matchMultipleDotRegEx = /\.{2,}/g;
-const cleanSearchEntryStrRegEx = /[^a-zA-Z0-9]/g;
-
-
-const generateFilePathArr = (dirArr) => {
-  const fileNameArr = [];
+const generateFilePathArr = (dirArr: string[]): string[] => {
+  const fileNameArr: string[][] = [];
   for (const dir of dirArr) {
     const filesOfDirArrEntryArr = readdirSync(dir);
     for (const fileName of filesOfDirArrEntryArr) {
@@ -31,27 +26,6 @@ const generateFilePathArr = (dirArr) => {
     }
   }
   return fileNameArr.map(([dir, fileName]) => `${dir}/${fileName}`);
-}
-
-
-
-
-const generateCleanedLineSplitArr = (data) => {
-  let i = 1;
-  const newLineSplitArr = data.split('\n').map(l => {
-    const cleanedLineStr = cleanUpLineStr(l);
-    const cleanedLineStrArr = cleanedLineStr.split(' ');
-
-    const result = {
-      line: i,
-      contentArr: cleanedLineStrArr
-    }
-
-    i += 1;
-    return result;
-  });
-
-  return newLineSplitArr;
 }
 
 
@@ -117,7 +91,6 @@ const main = () => {
             searchResults: el[1]
           };
         });
-
 
         writeSearchIndexObjToJsonFile(indexArr);
       })

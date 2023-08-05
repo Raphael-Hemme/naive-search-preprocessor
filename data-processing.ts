@@ -1,4 +1,29 @@
-const generatePartialEntries = (entry) => {
+export interface LineSplitObj {
+    line: number;
+    contentArr: string[];
+}
+
+export interface SourceEntryObj {
+    file: string;
+    line: number;
+}
+
+export type SearchIndexEntryArrFormat = [string, SourceEntryObj[]];
+
+export interface SearchIndexEntryObjFormat {
+    [key: string]: SourceEntryObj[];
+}
+
+
+const matchSymbolsRegEx = /[^a-zA-Z0-9. ]/g;
+const matchMultipleSpaceRegEx = /\s{2,}/g;
+const matchMultipleDotRegEx = /\.{2,}/g;
+const cleanSearchEntryStrRegEx = /[^a-zA-Z0-9]/g;
+
+
+
+// currently not used - but might be useful later
+const generatePartialEntries = (entry: string): string[] => {
     const partialsArr = [];
     for (let strLen = entry.length; strLen > 0; strLen--) {
         partialsArr.push(entry.slice(0, strLen));
@@ -7,15 +32,33 @@ const generatePartialEntries = (entry) => {
 }
 
 
-export const cleanUpLineStr = (lineStr) => {
+export const cleanUpLineStr = (lineStr: string): string => {
     return lineStr
         .replaceAll(matchSymbolsRegEx, ' ')
         .replaceAll(matchMultipleSpaceRegEx, ' ')
         .trim();
 }
 
+export const generateCleanedLineSplitArr = (data: string): LineSplitObj[] => {
+    let i = 1;
+    const newLineSplitArr = data.split('\n').map(l => {
+      const cleanedLineStr = cleanUpLineStr(l);
+      const cleanedLineStrArr = cleanedLineStr.split(' ');
+  
+      const result = {
+        line: i,
+        contentArr: cleanedLineStrArr
+      }
+  
+      i += 1;
+      return result;
+    });
+  
+    return newLineSplitArr;
+  }
 
-export const cleanSearchEntryStr = (searchEntryStr) => {
+
+export const cleanSearchEntryStr = (searchEntryStr: string): string => {
     const strLen = searchEntryStr.length;
     let cleanedStr = searchEntryStr.replaceAll(matchMultipleDotRegEx, '.');
 
@@ -100,7 +143,7 @@ export const removeDuplicateValueObjs = (inputArr) => {
     });
 };
 
-export const sortFinalIndexArr = (inputArr) => {
+export const sortFinalIndexArr = (inputArr: SearchIndexEntryArrFormat[]): SearchIndexEntryArrFormat[] => {
     const sortedArr = inputArr.sort((a, b) => {
         if (a[0] > b[0]) {
             return 1;
