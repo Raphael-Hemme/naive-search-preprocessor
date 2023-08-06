@@ -186,7 +186,7 @@ const main = () => {
   of('start')
     .pipe(
       tap(() => printFrontMatter()),
-      map(() => generateFilePathArr(['./blog-posts', './io-garden-experiment-descriptions'])),
+      map(() => generateFilePathArr(['./../blog-posts', './../io-garden-experiment-descriptions'])),
       tap((filePathArr) => printFilePaths(filePathArr)),
       map((filePathArr) => {
         const fileContentArr = [];
@@ -206,8 +206,10 @@ const main = () => {
         const resultArr = [];
         for (const file of fileContentArr) {
           const cleanedLineSplitArr = generateCleanedLineSplitArr(file.fileContent);
+          // console.log('---> ', cleanedLineSplitArr[0]);
           resultArr.push(...generatePreIndexObjArr(cleanedLineSplitArr, file.filePath))
         }
+        console.log('preIdnexObjArr[0]: ', resultArr[0]);
         return resultArr;
       }),
       map((preIndexObjArr) => {

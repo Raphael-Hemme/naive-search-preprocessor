@@ -7,16 +7,18 @@ import {
 import { tap, of, map } from 'rxjs';
 
 
-import { printFrontMatter, printFilePaths } from './cli-output';
+import { printFrontMatter, printFilePaths } from './cli-output.js';
 import {
-    cleanUpLineStr,
-    LineSplitObj,
+    // cleanUpLineStr,
+    // LineSplitObj,
     generatePreIndexObjArr,
     reduceToUniqueKeys,
     removeDuplicateValueObjs,
     sortFinalIndexArr,
-    generateCleanedLineSplitArr
-} from './data-processing';
+    generateCleanedLineSplitArr,
+    SearchIndexEntryArrFormat,
+    SearchIndexObj
+} from './data-processing.js';
 
 const generateFilePathArr = (dirArr: string[]): string[] => {
   const fileNameArr: string[][] = [];
@@ -30,8 +32,8 @@ const generateFilePathArr = (dirArr: string[]): string[] => {
 }
 
 
-const writeSearchIndexObjToJsonFile = (searchIndexObj) => {
-  const jsonObj = JSON.stringify(searchIndexObj);
+const writeSearchIndexObjToJsonFile = (searchIndexArr: SearchIndexObj[]) => {
+  const jsonObj = JSON.stringify(searchIndexArr);
   writeFile('search-index-5.json', jsonObj, 'utf8', (err) => {
     if (err) {
       console.log('There has been an error: ', err);
@@ -48,8 +50,8 @@ const main = () => {
       tap(() => printFrontMatter()),
       map(() => generateFilePathArr(['./blog-posts', './io-garden-experiment-descriptions'])),
       tap((filePathArr) => printFilePaths(filePathArr)),
-      map((filePathArr) => {
-        const fileContentArr = [];
+      map((filePathArr: string[]): {fileContent: string, filePath: string}[] => {
+        const fileContentArr: {fileContent: string, filePath: string}[] = [];
         console.log('Reading files:')
         for (const filePath of filePathArr) {
           console.log('\t', filePath)
@@ -60,10 +62,10 @@ const main = () => {
         }
         return fileContentArr;
       }),
-      map((fileContentArr) => {
+      map((fileContentArr): SearchIndexEntryArrFormat[] => {
         console.log('\n');
         console.log('Processing content of files...');
-        const resultArr = [];
+        const resultArr: SearchIndexEntryArrFormat[] = [];
         for (const file of fileContentArr) {
           const cleanedLineSplitArr = generateCleanedLineSplitArr(file.fileContent);
           resultArr.push(...generatePreIndexObjArr(cleanedLineSplitArr, file.filePath))
@@ -82,10 +84,10 @@ const main = () => {
         const cleanedPreObjArr = removeDuplicateValueObjs(uniqueKeysArr);
         return cleanedPreObjArr; 
       }),
-      tap((cleanedPreObjArr) => {
+      tap((cleanedPreObjArr: SearchIndexEntryArrFormat[]) => {
         const sortedCleanedPreObjArr = sortFinalIndexArr(cleanedPreObjArr);
 
-        const indexArr = sortedCleanedPreObjArr.map((el) => {
+        const indexArr: SearchIndexObj[] = sortedCleanedPreObjArr.map((el) => {
           return {
             searchTerm: el[0],
             searchResults: el[1]
