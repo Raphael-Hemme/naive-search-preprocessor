@@ -2,7 +2,7 @@ import {
     readFileSync,
     readdirSync,
     writeFile 
-    } from 'fs';
+} from 'fs';
     
 import { tap, of, map } from 'rxjs';
 
@@ -34,7 +34,7 @@ const generateFilePathArr = (dirArr: string[]): string[] => {
 
 const writeSearchIndexObjToJsonFile = (searchIndexArr: SearchIndexObj[]) => {
   const jsonObj = JSON.stringify(searchIndexArr);
-  writeFile('search-index-5.json', jsonObj, 'utf8', (err) => {
+  writeFile('search-index.json', jsonObj, 'utf8', (err) => {
     if (err) {
       console.log('There has been an error: ', err);
       console.log('\n');

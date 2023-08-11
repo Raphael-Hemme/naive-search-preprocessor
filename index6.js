@@ -17,7 +17,7 @@ const generateFilePathArr = (dirArr) => {
 };
 const writeSearchIndexObjToJsonFile = (searchIndexArr) => {
     const jsonObj = JSON.stringify(searchIndexArr);
-    writeFile('search-index-5.json', jsonObj, 'utf8', (err) => {
+    writeFile('search-index.json', jsonObj, 'utf8', (err) => {
         if (err) {
             console.log('There has been an error: ', err);
             console.log('\n');
