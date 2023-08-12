@@ -108,22 +108,6 @@ const promptForTargetPath = async (): Promise<string> => {
 }
 
 const processArgsAndExecuteMode = async (): Promise<SourceAndTargetPathObj | 'HELP' | 'ERROR'> => {
-/*     return of(getRelevantScriptArgs()).pipe(
-        map((args: string[] | null): [Mode, string[] | null] => {
-            return [selectMode(args), args]
-        }),
-        switchMap((modeAndArgs) => {
-            const [mode, args] = modeAndArgs;
-            const resultObj: SourceAndTargetPathObj = extractSourceAndTargetPathsFromArgs(args);
-            if (mode === 'CLI') {
-                if (resultObj.sourcePaths.length > 0) {
-                    
-                };
-            } else {
-                return of(resultObj);
-            }
-        })
-    ) */
 
     const args = getRelevantScriptArgs();
     const mode = selectMode(args);
