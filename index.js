@@ -1,7 +1,8 @@
 import { readFileSync, readdirSync, writeFile } from 'fs';
-import { tap, of, map } from 'rxjs';
-import { printFrontMatter, printFilePaths } from './../cli-output.js';
-import { generatePreIndexObjArr, reduceToUniqueKeys, removeDuplicateValueObjs, sortFinalIndexArr, generateCleanedLineSplitArr } from './../data-processing.js';
+import { tap, of, from, map, switchMap } from 'rxjs';
+import { printFrontMatter, printFilePaths } from './cli-output.js';
+import { generatePreIndexObjArr, reduceToUniqueKeys, removeDuplicateValueObjs, sortFinalIndexArr, generateCleanedLineSplitArr } from './data-processing.js';
+import { processArgsAndExecuteMode } from './cli-input.js';
 const generateFilePathArr = (dirArr) => {
     const fileNameArr = [];
     for (const dir of dirArr) {
@@ -26,7 +27,7 @@ const writeSearchIndexObjToJsonFile = (searchIndexArr) => {
 };
 const main = () => {
     of('start')
-        .pipe(tap(() => printFrontMatter()), map(() => generateFilePathArr(['./blog-posts', './io-garden-experiment-descriptions'])), tap((filePathArr) => printFilePaths(filePathArr)), map((filePathArr) => {
+        .pipe(tap(() => printFrontMatter()), switchMap(() => from(processArgsAndExecuteMode())), tap((sourceAndTargetPathObj) => console.log('test of getting args: ', sourceAndTargetPathObj)), map((sourceAndTargetPathObj) => generateFilePathArr(['./blog-posts', './io-garden-experiment-descriptions'])), tap((filePathArr) => printFilePaths(filePathArr)), map((filePathArr) => {
         const fileContentArr = [];
         console.log('Reading files:');
         for (const filePath of filePathArr) {
