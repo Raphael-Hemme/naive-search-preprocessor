@@ -10,6 +10,7 @@ export interface SourceAndTargetPathObj {
     sourcePaths: string[];
     targetPath: string;
     errors: string[];
+    mode: Mode;
 }
 
 
@@ -46,7 +47,8 @@ const extractSourceAndTargetPathsFromArgs = (allArgs: string[] | null): SourceAn
     const resultObj: SourceAndTargetPathObj = {
         sourcePaths: [],
         targetPath: '',
-        errors: []
+        errors: [],
+        mode: 'CLI',
     }
 
     if (!allArgs) {
@@ -59,15 +61,19 @@ const extractSourceAndTargetPathsFromArgs = (allArgs: string[] | null): SourceAn
     if (sourcePathsStartIndicator !== -1 && targetPathsStartIndicator !== -1) {
         resultObj.sourcePaths = allArgs.slice(sourcePathsStartIndicator + 1, targetPathsStartIndicator);
         resultObj.targetPath = allArgs[targetPathsStartIndicator + 1];
+        resultObj.mode = 'AUTO';
     } else if (sourcePathsStartIndicator !== -1 && targetPathsStartIndicator === -1) {
         resultObj.sourcePaths = allArgs.slice(sourcePathsStartIndicator + 1);
         resultObj.errors.push('missing target path');
+        resultObj.mode = 'CLI';
     } else if (sourcePathsStartIndicator === -1 && targetPathsStartIndicator !== -1) {
         resultObj.targetPath = allArgs[targetPathsStartIndicator + 1];
         resultObj.errors.push('missing source paths');
+        resultObj.mode = 'CLI';
     } else {
         resultObj.errors.push('missing source paths');
         resultObj.errors.push('missing target path');
+        resultObj.mode = 'CLI';
     }
 
     return resultObj;
@@ -106,7 +112,7 @@ const promptForTargetPath = async (): Promise<string> => {
     return answer;
 }
 
-const processArgsAndExecuteMode = async (): Promise<SourceAndTargetPathObj | 'HELP' | 'ERROR'> => {
+const processArgsAndExecuteMode = async (): Promise<SourceAndTargetPathObj> => {
 
     const args = getRelevantScriptArgs();
     const mode = selectMode(args);
@@ -124,10 +130,11 @@ const processArgsAndExecuteMode = async (): Promise<SourceAndTargetPathObj | 'HE
         console.log('Entering AUTO Mode. Starting indexing process now.');
     } else if (mode === 'HELP') {
         console.log('Entering HELP Mode.');
-        return 'HELP';
+        resultObj.mode = mode;
     } else {
         console.log('Entering ERROR Mode.');
-        return 'ERROR';
+        resultObj.mode = mode;
+        resultObj.errors.push('Something went wrong. Please check your input and try again.');
     }
 
     return resultObj;
