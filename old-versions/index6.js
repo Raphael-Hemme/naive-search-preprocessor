@@ -1,10 +1,10 @@
 import { readFileSync, readdirSync, writeFile } from 'fs';
 import { tap, of, map } from 'rxjs';
-import { printFrontMatter, printFilePaths } from './cli-output.js';
+import { printFrontMatter, printFilePaths } from '../cli-output.js';
 import { 
 // cleanUpLineStr,
 // LineSplitObj,
-generatePreIndexObjArr, reduceToUniqueKeys, removeDuplicateValueObjs, sortFinalIndexArr, generateCleanedLineSplitArr } from './data-processing.js';
+generatePreIndexObjArr, reduceToUniqueKeys, removeDuplicateValueObjs, sortFinalIndexArr, generateCleanedLineSplitArr } from '../data-processing.js';
 const generateFilePathArr = (dirArr) => {
     const fileNameArr = [];
     for (const dir of dirArr) {

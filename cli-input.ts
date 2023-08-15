@@ -43,12 +43,12 @@ const selectMode = (allArgs: string[] | null): Mode => {
     };
 }
 
-const extractSourceAndTargetPathsFromArgs = (allArgs: string[] | null): SourceAndTargetPathObj => {
+const extractSourceAndTargetPathsFromArgs = (allArgs: string[] | null, mode: Mode): SourceAndTargetPathObj => {
     const resultObj: SourceAndTargetPathObj = {
         sourcePaths: [],
         targetPath: '',
         errors: [],
-        mode: 'CLI',
+        mode: mode,
     }
 
     if (!allArgs) {
@@ -112,11 +112,11 @@ const promptForTargetPath = async (): Promise<string> => {
     return answer;
 }
 
-const processArgsAndExecuteMode = async (): Promise<SourceAndTargetPathObj> => {
+export const processArgsAndExecuteMode = async (): Promise<SourceAndTargetPathObj> => {
 
     const args = getRelevantScriptArgs();
     const mode = selectMode(args);
-    const resultObj: SourceAndTargetPathObj = extractSourceAndTargetPathsFromArgs(args);
+    const resultObj: SourceAndTargetPathObj = extractSourceAndTargetPathsFromArgs(args, mode);
 
     if (mode === 'CLI') {
         if (resultObj.sourcePaths.length < 1) {
@@ -130,10 +130,8 @@ const processArgsAndExecuteMode = async (): Promise<SourceAndTargetPathObj> => {
         console.log('Entering AUTO Mode. Starting indexing process now.');
     } else if (mode === 'HELP') {
         console.log('Entering HELP Mode.');
-        resultObj.mode = mode;
     } else {
         console.log('Entering ERROR Mode.');
-        resultObj.mode = mode;
         resultObj.errors.push('Something went wrong. Please check your input and try again.');
     }
 

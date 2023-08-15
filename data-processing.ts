@@ -8,6 +8,11 @@ export interface SourceEntryObj {
     line: number;
 }
 
+export interface FileContetntObj {
+    fileContent: string;
+    filePath: string;
+}
+
 export type SearchIndexEntryArrFormat = [string, SourceEntryObj[]];
 
 export interface SearchIndexEntryObjFormat {

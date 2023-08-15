@@ -7,10 +7,8 @@ import {
 import { tap, of, map } from 'rxjs';
 
 
-import { printFrontMatter, printFilePaths } from './cli-output.js';
+import { printFrontMatter, printFilePaths } from './../cli-output.js';
 import {
-    // cleanUpLineStr,
-    // LineSplitObj,
     generatePreIndexObjArr,
     reduceToUniqueKeys,
     removeDuplicateValueObjs,
@@ -18,7 +16,7 @@ import {
     generateCleanedLineSplitArr,
     SearchIndexEntryArrFormat,
     SearchIndexObj
-} from './data-processing.js';
+} from './../data-processing.js';
 
 const generateFilePathArr = (dirArr: string[]): string[] => {
   const fileNameArr: string[][] = [];
