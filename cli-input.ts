@@ -74,6 +74,7 @@ const extractSourceAndTargetPathsFromArgs = (allArgs: string[] | null, mode: Mod
         } else {
             resultObj.mode = 'CLI';
         }
+
     } else if (sourcePathsStartIndicator !== -1 && targetPathsStartIndicator === -1) {
         resultObj.sourcePaths = allArgs.slice(sourcePathsStartIndicator + 1);
         resultObj.errors.push('missing target path');
@@ -108,7 +109,12 @@ const promptForSourcePaths = async (): Promise<string[]> => {
         sourcePaths.push(answer);
     }
 
-    return sourcePaths;
+    if (sourcePaths.length < 1) {
+        console.log('You did not specify any source paths.');
+        return await promptForSourcePaths();
+    } else {
+        return sourcePaths;
+    }
 }
 
 const promptForTargetPath = async (): Promise<string> => {
@@ -121,7 +127,13 @@ const promptForTargetPath = async (): Promise<string> => {
     const answer = await new Promise<string>(resolve => rl.question('', resolve));
     rl.close();
 
-    return answer;
+    if (answer === '') {
+        console.log('You did not specify a target path.');
+        return await promptForTargetPath();
+    } else {
+        return answer;
+    }
+
 }
 
 export const processArgsAndExecuteMode = async (): Promise<SourceAndTargetPathObj> => {
@@ -144,6 +156,8 @@ export const processArgsAndExecuteMode = async (): Promise<SourceAndTargetPathOb
             }
         }
         console.log('Thanks for your input. Exiting CLI Mode. Starting indexing process now.');
+        resultObj.mode = 'AUTO';
+
     } else if (mode === 'AUTO') {
         console.log('Entering AUTO Mode. Starting indexing process now.');
     } else if (mode === 'HELP') {

@@ -50,7 +50,18 @@ const extractSourceAndTargetPathsFromArgs = (allArgs, mode) => {
     if (sourcePathsStartIndicator !== -1 && targetPathsStartIndicator !== -1) {
         resultObj.sourcePaths = allArgs.slice(sourcePathsStartIndicator + 1, targetPathsStartIndicator);
         resultObj.targetPath = allArgs[targetPathsStartIndicator + 1];
-        resultObj.mode = 'AUTO';
+        if (resultObj.sourcePaths.length < 1) {
+            resultObj.errors.push('missing source paths');
+        }
+        if (resultObj.targetPath === '') {
+            resultObj.errors.push('missing target path');
+        }
+        if (resultObj.sourcePaths.length > 0 && resultObj.targetPath !== '') {
+            resultObj.mode = 'AUTO';
+        }
+        else {
+            resultObj.mode = 'CLI';
+        }
     }
     else if (sourcePathsStartIndicator !== -1 && targetPathsStartIndicator === -1) {
         resultObj.sourcePaths = allArgs.slice(sourcePathsStartIndicator + 1);
@@ -84,7 +95,13 @@ const promptForSourcePaths = () => __awaiter(void 0, void 0, void 0, function* (
         }
         sourcePaths.push(answer);
     }
-    return sourcePaths;
+    if (sourcePaths.length < 1) {
+        console.log('You did not specify any source paths.');
+        return yield promptForSourcePaths();
+    }
+    else {
+        return sourcePaths;
+    }
 });
 const promptForTargetPath = () => __awaiter(void 0, void 0, void 0, function* () {
     const rl = readline.createInterface({
@@ -94,7 +111,13 @@ const promptForTargetPath = () => __awaiter(void 0, void 0, void 0, function* ()
     console.log('Please enter the path to the target file.');
     const answer = yield new Promise(resolve => rl.question('', resolve));
     rl.close();
-    return answer;
+    if (answer === '') {
+        console.log('You did not specify a target path.');
+        return yield promptForTargetPath();
+    }
+    else {
+        return answer;
+    }
 });
 export const processArgsAndExecuteMode = () => __awaiter(void 0, void 0, void 0, function* () {
     const args = getRelevantScriptArgs();
@@ -114,6 +137,7 @@ export const processArgsAndExecuteMode = () => __awaiter(void 0, void 0, void 0,
             }
         }
         console.log('Thanks for your input. Exiting CLI Mode. Starting indexing process now.');
+        resultObj.mode = 'AUTO';
     }
     else if (mode === 'AUTO') {
         console.log('Entering AUTO Mode. Starting indexing process now.');
