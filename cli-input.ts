@@ -61,7 +61,19 @@ const extractSourceAndTargetPathsFromArgs = (allArgs: string[] | null, mode: Mod
     if (sourcePathsStartIndicator !== -1 && targetPathsStartIndicator !== -1) {
         resultObj.sourcePaths = allArgs.slice(sourcePathsStartIndicator + 1, targetPathsStartIndicator);
         resultObj.targetPath = allArgs[targetPathsStartIndicator + 1];
-        resultObj.mode = 'AUTO';
+
+        if (resultObj.sourcePaths.length < 1) {
+            resultObj.errors.push('missing source paths');
+        }
+        if (resultObj.targetPath === '') {
+            resultObj.errors.push('missing target path');
+        }
+
+        if (resultObj.sourcePaths.length > 0 && resultObj.targetPath !== '') {
+            resultObj.mode = 'AUTO';
+        } else {
+            resultObj.mode = 'CLI';
+        }
     } else if (sourcePathsStartIndicator !== -1 && targetPathsStartIndicator === -1) {
         resultObj.sourcePaths = allArgs.slice(sourcePathsStartIndicator + 1);
         resultObj.errors.push('missing target path');
