@@ -21,6 +21,9 @@ import {
 
 import { processArgsAndExecuteMode, SourceAndTargetPathObj } from './cli-input.js';
 
+let sourcePaths: string[] = [];
+let targetPath: string = '';
+
 const generateFilePathArr = (dirArr: string[]): string[] => {
   const fileNameArr: string[][] = [];
   for (const dir of dirArr) {
@@ -33,9 +36,9 @@ const generateFilePathArr = (dirArr: string[]): string[] => {
 }
 
 
-const writeSearchIndexObjToJsonFile = (searchIndexArr: SearchIndexObj[]) => {
+const writeSearchIndexObjToJsonFile = (searchIndexArr: SearchIndexObj[], trgtP: string) => {
   const jsonObj = JSON.stringify(searchIndexArr);
-  writeFile('search-index.json', jsonObj, 'utf8', (err) => {
+  writeFile(trgtP, jsonObj, 'utf8', (err) => {
     if (err) {
       console.log('There has been an error: ', err);
       console.log('\n');
@@ -50,14 +53,16 @@ const main = () => {
     .pipe(
       tap(() => printFrontMatter()),
       switchMap(() => from(processArgsAndExecuteMode())),
-      tap((sourceAndTargetPathObj: SourceAndTargetPathObj) => console.log('test of getting args: ', sourceAndTargetPathObj)),
-      map((sourceAndTargetPathObj: SourceAndTargetPathObj) => generateFilePathArr(['./blog-posts', './io-garden-experiment-descriptions'])),
+      tap((sourceAndTargetPathObj: SourceAndTargetPathObj) => {
+        sourcePaths = sourceAndTargetPathObj.sourcePaths.slice();
+        targetPath = sourceAndTargetPathObj.targetPath;
+      }),
+      map(() => generateFilePathArr(sourcePaths)),
       tap((filePathArr: string[]) => printFilePaths(filePathArr)),
       map((filePathArr: string[]): {fileContent: string, filePath: string}[] => {
         const fileContentArr: FileContetntObj[] = [];
         console.log('Reading files:')
         for (const filePath of filePathArr) {
-          console.log('\t', filePath)
           fileContentArr.push({
             fileContent: readFileSync(filePath, 'utf8'),
             filePath
@@ -97,7 +102,7 @@ const main = () => {
           };
         });
 
-        writeSearchIndexObjToJsonFile(indexArr);
+        writeSearchIndexObjToJsonFile(indexArr, targetPath);
       })
     )
     .subscribe();

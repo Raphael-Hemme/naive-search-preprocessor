@@ -3,6 +3,8 @@ import { tap, of, from, map, switchMap } from 'rxjs';
 import { printFrontMatter, printFilePaths } from './cli-output.js';
 import { generatePreIndexObjArr, reduceToUniqueKeys, removeDuplicateValueObjs, sortFinalIndexArr, generateCleanedLineSplitArr } from './data-processing.js';
 import { processArgsAndExecuteMode } from './cli-input.js';
+let sourcePaths = [];
+let targetPath = '';
 const generateFilePathArr = (dirArr) => {
     const fileNameArr = [];
     for (const dir of dirArr) {
@@ -13,9 +15,9 @@ const generateFilePathArr = (dirArr) => {
     }
     return fileNameArr.map(([dir, fileName]) => `${dir}/${fileName}`);
 };
-const writeSearchIndexObjToJsonFile = (searchIndexArr) => {
+const writeSearchIndexObjToJsonFile = (searchIndexArr, trgtP) => {
     const jsonObj = JSON.stringify(searchIndexArr);
-    writeFile('search-index.json', jsonObj, 'utf8', (err) => {
+    writeFile(trgtP, jsonObj, 'utf8', (err) => {
         if (err) {
             console.log('There has been an error: ', err);
             console.log('\n');
@@ -27,11 +29,13 @@ const writeSearchIndexObjToJsonFile = (searchIndexArr) => {
 };
 const main = () => {
     of('start')
-        .pipe(tap(() => printFrontMatter()), switchMap(() => from(processArgsAndExecuteMode())), tap((sourceAndTargetPathObj) => console.log('test of getting args: ', sourceAndTargetPathObj)), map((sourceAndTargetPathObj) => generateFilePathArr(['./blog-posts', './io-garden-experiment-descriptions'])), tap((filePathArr) => printFilePaths(filePathArr)), map((filePathArr) => {
+        .pipe(tap(() => printFrontMatter()), switchMap(() => from(processArgsAndExecuteMode())), tap((sourceAndTargetPathObj) => {
+        sourcePaths = sourceAndTargetPathObj.sourcePaths.slice();
+        targetPath = sourceAndTargetPathObj.targetPath;
+    }), map(() => generateFilePathArr(sourcePaths)), tap((filePathArr) => printFilePaths(filePathArr)), map((filePathArr) => {
         const fileContentArr = [];
         console.log('Reading files:');
         for (const filePath of filePathArr) {
-            console.log('\t', filePath);
             fileContentArr.push({
                 fileContent: readFileSync(filePath, 'utf8'),
                 filePath
@@ -65,7 +69,7 @@ const main = () => {
                 searchResults: el[1]
             };
         });
-        writeSearchIndexObjToJsonFile(indexArr);
+        writeSearchIndexObjToJsonFile(indexArr, targetPath);
     }))
         .subscribe();
 };

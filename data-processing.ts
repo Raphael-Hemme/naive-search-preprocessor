@@ -65,8 +65,7 @@ export const generateCleanedLineSplitArr = (data: string): LineSplitObj[] => {
     });
   
     return newLineSplitArr;
-  }
-
+}
 
 export const cleanSearchEntryStr = (searchEntryStr: string): string => {
     const strLen = searchEntryStr.length;
