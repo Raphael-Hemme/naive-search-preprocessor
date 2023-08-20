@@ -7,13 +7,21 @@ import {
 import {
     tap,
     of,
+    filter,
     from,
     map,
-    switchMap
+    switchMap,
+    Subject,
+    takeUntil
  } from 'rxjs';
 
 
-import { printFrontMatter, printFilePaths } from './cli-output.js';
+import {
+  printFrontMatter,
+  printFilePaths,
+  printHelp
+} from './cli-output.js';
+
 import {
     generatePreIndexObjArr,
     reduceToUniqueKeys,
@@ -30,6 +38,8 @@ import { processArgsAndExecuteMode, SourceAndTargetPathObj } from './cli-input.j
 
 let sourcePaths: string[] = [];
 let targetPath: string = '';
+
+const stopSignal$$ = new Subject();
 
 const generateFilePathArr = (dirArr: string[]): string[] => {
   const fileNameArr: string[][] = [];
@@ -58,11 +68,20 @@ const writeSearchIndexObjToJsonFile = (searchIndexArr: SearchIndexObj[], trgtP: 
 const main = () => {
   of('start')
     .pipe(
+      takeUntil(stopSignal$$),
       tap(() => printFrontMatter()),
       switchMap(() => from(processArgsAndExecuteMode())),
       tap((sourceAndTargetPathObj: SourceAndTargetPathObj) => {
-        sourcePaths = sourceAndTargetPathObj.sourcePaths.slice();
-        targetPath = sourceAndTargetPathObj.targetPath;
+        if (sourceAndTargetPathObj.mode === 'HELP') {
+          printHelp();
+          stopSignal$$.next('STOP');
+        } else {
+          sourcePaths = sourceAndTargetPathObj.sourcePaths.slice();
+          targetPath = sourceAndTargetPathObj.targetPath;
+        }
+      }),
+      filter((sourceAndTargetPathObj: SourceAndTargetPathObj) => {
+        return sourceAndTargetPathObj.mode !== 'HELP' && sourceAndTargetPathObj.mode !== 'ERROR'
       }),
       map(() => generateFilePathArr(sourcePaths)),
       tap((filePathArr: string[]) => printFilePaths(filePathArr)),
@@ -103,6 +122,7 @@ const main = () => {
         });
 
         writeSearchIndexObjToJsonFile(indexArr, targetPath);
+        stopSignal$$.next('STOP');
       })
     )
     .subscribe();

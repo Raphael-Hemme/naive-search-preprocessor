@@ -1,10 +1,11 @@
 import { readFileSync, readdirSync, writeFile } from 'fs';
-import { tap, of, from, map, switchMap } from 'rxjs';
-import { printFrontMatter, printFilePaths } from './cli-output.js';
-import { generatePreIndexObjArr, reduceToUniqueKeys, removeDuplicateValueObjs, sortFinalIndexArr, generateCleanedLineSplitArr } from './data-processing.js';
+import { tap, of, filter, from, map, switchMap, Subject, takeUntil } from 'rxjs';
+import { printFrontMatter, printFilePaths, printHelp } from './cli-output.js';
+import { reduceToUniqueKeys, removeDuplicateValueObjs, sortFinalIndexArr, generateArrOfPreIndexObjsFromFilePathArr } from './data-processing.js';
 import { processArgsAndExecuteMode } from './cli-input.js';
 let sourcePaths = [];
 let targetPath = '';
+const stopSignal$$ = new Subject();
 const generateFilePathArr = (dirArr) => {
     const fileNameArr = [];
     for (const dir of dirArr) {
@@ -29,9 +30,17 @@ const writeSearchIndexObjToJsonFile = (searchIndexArr, trgtP) => {
 };
 const main = () => {
     of('start')
-        .pipe(tap(() => printFrontMatter()), switchMap(() => from(processArgsAndExecuteMode())), tap((sourceAndTargetPathObj) => {
-        sourcePaths = sourceAndTargetPathObj.sourcePaths.slice();
-        targetPath = sourceAndTargetPathObj.targetPath;
+        .pipe(takeUntil(stopSignal$$), tap(() => printFrontMatter()), switchMap(() => from(processArgsAndExecuteMode())), tap((sourceAndTargetPathObj) => {
+        if (sourceAndTargetPathObj.mode === 'HELP') {
+            printHelp();
+            stopSignal$$.next('STOP');
+        }
+        else {
+            sourcePaths = sourceAndTargetPathObj.sourcePaths.slice();
+            targetPath = sourceAndTargetPathObj.targetPath;
+        }
+    }), filter((sourceAndTargetPathObj) => {
+        return sourceAndTargetPathObj.mode !== 'HELP' && sourceAndTargetPathObj.mode !== 'ERROR';
     }), map(() => generateFilePathArr(sourcePaths)), tap((filePathArr) => printFilePaths(filePathArr)), map((filePathArr) => {
         const fileContentArr = [];
         console.log('Reading files:');
@@ -43,14 +52,7 @@ const main = () => {
         }
         return fileContentArr;
     }), map((fileContentArr) => {
-        console.log('\n');
-        console.log('Processing content of files...');
-        const resultArr = [];
-        for (const file of fileContentArr) {
-            const cleanedLineSplitArr = generateCleanedLineSplitArr(file.fileContent);
-            resultArr.push(...generatePreIndexObjArr(cleanedLineSplitArr, file.filePath));
-        }
-        return resultArr;
+        return generateArrOfPreIndexObjsFromFilePathArr(fileContentArr);
     }), map((preIndexObjArr) => {
         console.log('\n\nProcessing full indexes and collecting sources...');
         console.log('This will take a while. Thanks for your patience.\n');
@@ -70,6 +72,7 @@ const main = () => {
             };
         });
         writeSearchIndexObjToJsonFile(indexArr, targetPath);
+        stopSignal$$.next('STOP');
     }))
         .subscribe();
 };

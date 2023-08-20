@@ -45,6 +45,10 @@ const extractSourceAndTargetPathsFromArgs = (allArgs, mode) => {
     if (!allArgs) {
         return resultObj;
     }
+    if (mode === 'HELP') {
+        resultObj.mode = 'HELP';
+        return resultObj;
+    }
     let sourcePathsStartIndicator = allArgs.findIndex(arg => arg === '--source');
     let targetPathsStartIndicator = allArgs.findIndex(arg => arg === '--target');
     if (sourcePathsStartIndicator !== -1 && targetPathsStartIndicator !== -1) {
