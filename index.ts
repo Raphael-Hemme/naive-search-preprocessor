@@ -4,7 +4,13 @@ import {
     writeFile 
 } from 'fs';
     
-import { tap, of, from, map, switchMap } from 'rxjs';
+import {
+    tap,
+    of,
+    from,
+    map,
+    switchMap
+ } from 'rxjs';
 
 
 import { printFrontMatter, printFilePaths } from './cli-output.js';
@@ -16,7 +22,8 @@ import {
     generateCleanedLineSplitArr,
     SearchIndexEntryArrFormat,
     SearchIndexObj,
-    FileContetntObj
+    FileContetntObj,
+    generateArrOfPreIndexObjsFromFilePathArr
 } from './data-processing.js';
 
 import { processArgsAndExecuteMode, SourceAndTargetPathObj } from './cli-input.js';
@@ -59,7 +66,7 @@ const main = () => {
       }),
       map(() => generateFilePathArr(sourcePaths)),
       tap((filePathArr: string[]) => printFilePaths(filePathArr)),
-      map((filePathArr: string[]): {fileContent: string, filePath: string}[] => {
+      map((filePathArr: string[]): FileContetntObj[] => {
         const fileContentArr: FileContetntObj[] = [];
         console.log('Reading files:')
         for (const filePath of filePathArr) {
@@ -70,15 +77,8 @@ const main = () => {
         }
         return fileContentArr;
       }),
-      map((fileContentArr: FileContetntObj[]): SearchIndexEntryArrFormat[] => {
-        console.log('\n');
-        console.log('Processing content of files...');
-        const resultArr: SearchIndexEntryArrFormat[] = [];
-        for (const file of fileContentArr) {
-          const cleanedLineSplitArr = generateCleanedLineSplitArr(file.fileContent);
-          resultArr.push(...generatePreIndexObjArr(cleanedLineSplitArr, file.filePath))
-        }
-        return resultArr;
+      map((fileContentArr: FileContetntObj[]) => {
+        return generateArrOfPreIndexObjsFromFilePathArr(fileContentArr);
       }),
       map((preIndexObjArr) => {
         console.log('\n\nProcessing full indexes and collecting sources...');

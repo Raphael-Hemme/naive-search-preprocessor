@@ -132,17 +132,25 @@ export const reduceToUniqueKeys = (inputArr: SearchIndexEntryArrFormat[], isFull
         }
     }
 
-    // Has this really been the bug that caused node to run out of memory and crash?
-    // Because the per line arrays were not cleaned properly because of the condition below?
-
-    // if (isFullArr) {
     const stringifiedArr = reducedArr.map(el => JSON.stringify(el))
     const reducedStringifiedArr = Array.from(new Set(stringifiedArr))
     reducedArr = reducedStringifiedArr.map(el => JSON.parse(el));
-    // }
 
     return reducedArr;
 };
+
+export const generateArrOfPreIndexObjsFromFilePathArr = (fileContentArr: FileContetntObj[]): SearchIndexEntryArrFormat[] => {
+    console.log('\n');
+    console.log('Processing content of files...');
+
+    const resultArr: SearchIndexEntryArrFormat[] = [];
+    for (const file of fileContentArr) {
+        const cleanedLineSplitArr = generateCleanedLineSplitArr(file.fileContent);
+        resultArr.push(...generatePreIndexObjArr(cleanedLineSplitArr, file.filePath))
+    }
+
+    return resultArr;
+}
 
 export const removeDuplicateValueObjs = (inputArr: SearchIndexEntryArrFormat[]): SearchIndexEntryArrFormat[] => {
     return inputArr.map(el => {
