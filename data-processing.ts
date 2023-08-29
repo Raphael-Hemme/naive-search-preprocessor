@@ -42,6 +42,11 @@ const generatePartialEntries = (entry: string): string[] => {
 }
 
 
+/**
+ * Cleans up a string by replacing symbols with spaces, removing extra spaces, and trimming the result.
+ * @param {string} lineStr - The string to clean up.
+ * @returns {string} The cleaned up string.
+ */
 export const cleanUpLineStr = (lineStr: string): string => {
     return lineStr
         .replace(matchSymbolsRegEx, ' ')
@@ -49,6 +54,11 @@ export const cleanUpLineStr = (lineStr: string): string => {
         .trim();
 }
 
+/**
+ * Generates an array of objects, each representing a line of text with its line number and the lines content split into an array of cleaned words.
+ * @param {string} data - The input string to be processed.
+ * @returns {LineSplitObj[]} An array of objects, each containing the line number and an array of cleaned words.
+ */
 export const generateCleanedLineSplitArr = (data: string): LineSplitObj[] => {
     let i = 1;
     const newLineSplitArr = data.split('\n').map(l => {
@@ -66,6 +76,7 @@ export const generateCleanedLineSplitArr = (data: string): LineSplitObj[] => {
   
     return newLineSplitArr;
 }
+
 
 export const cleanSearchEntryStr = (searchEntryStr: string): string => {
     const strLen = searchEntryStr.length;
@@ -117,7 +128,13 @@ export const generatePreIndexObjArr = (
     return reducedArr;
 }
 
-export const reduceToUniqueKeys = (inputArr: SearchIndexEntryArrFormat[], isFullArr = false) => {
+/**
+ * Reduces an array of SearchIndexEntryArrFormat objects to an array of unique keys and their corresponding values.
+ * @param {SearchIndexEntryArrFormat[]} inputArr - The input array to be processed.
+ * @param {boolean} [isFullArr=false] - A boolean indicating whether the input array contains full arrays or sub-arrays.
+ * @returns {SearchIndexEntryArrFormat[]} An array of unique keys and their corresponding values.
+ */
+export const reduceToUniqueKeys = (inputArr: SearchIndexEntryArrFormat[], isFullArr: boolean = false): SearchIndexEntryArrFormat[] => {
     let reducedArr = [];
     for (const preIndexArr of inputArr) {
         const duplicateKeyEntrysArr = inputArr.filter(el => el[0] === preIndexArr[0]);
