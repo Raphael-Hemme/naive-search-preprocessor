@@ -77,7 +77,11 @@ export const generateCleanedLineSplitArr = (data: string): LineSplitObj[] => {
     return newLineSplitArr;
 }
 
-
+/**
+ * Cleans a search entry string by replacing multiple dots with a single dot, removing any trailing or leading punctuation, and converting to lowercase.
+ * @param {string} searchEntryStr - The search entry string to be cleaned.
+ * @returns {string} The cleaned search entry string.
+ */
 export const cleanSearchEntryStr = (searchEntryStr: string): string => {
     const strLen = searchEntryStr.length;
     let cleanedStr = searchEntryStr.replace(matchMultipleDotRegEx, '.');
@@ -169,6 +173,11 @@ export const generateArrOfPreIndexObjsFromFilePathArr = (fileContentArr: FileCon
     return resultArr;
 }
 
+/**
+ * Removes duplicate objects from an array of SearchIndexEntryArrFormat objects.
+ * @param {SearchIndexEntryArrFormat[]} inputArr - The input array to be processed.
+ * @returns {SearchIndexEntryArrFormat[]} An array of SearchIndexEntryArrFormat objects with duplicate objects removed.
+ */
 export const removeDuplicateValueObjs = (inputArr: SearchIndexEntryArrFormat[]): SearchIndexEntryArrFormat[] => {
     return inputArr.map(el => {
         const stringifiedValueArr = el[1].map(e => JSON.stringify(e));
@@ -180,6 +189,11 @@ export const removeDuplicateValueObjs = (inputArr: SearchIndexEntryArrFormat[]):
     });
 };
 
+/**
+ * Sorts an array of SearchIndexEntryArrFormat objects by the first element of each sub-array.
+ * @param {SearchIndexEntryArrFormat[]} inputArr - The input array to be sorted.
+ * @returns {SearchIndexEntryArrFormat[]} A sorted array of SearchIndexEntryArrFormat objects.
+ */
 export const sortFinalIndexArr = (inputArr: SearchIndexEntryArrFormat[]): SearchIndexEntryArrFormat[] => {
     const sortedArr = inputArr.sort((a, b) => {
         if (a[0] > b[0]) {
