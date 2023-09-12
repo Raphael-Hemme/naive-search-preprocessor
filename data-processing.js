@@ -11,12 +11,22 @@ const generatePartialEntries = (entry) => {
     ;
     return (partialsArr);
 };
+/**
+ * Cleans up a string by replacing symbols with spaces, removing extra spaces, and trimming the result.
+ * @param {string} lineStr - The string to clean up.
+ * @returns {string} The cleaned up string.
+ */
 export const cleanUpLineStr = (lineStr) => {
     return lineStr
         .replace(matchSymbolsRegEx, ' ')
         .replace(matchMultipleSpaceRegEx, ' ')
         .trim();
 };
+/**
+ * Generates an array of objects, each representing a line of text with its line number and the lines content split into an array of cleaned words.
+ * @param {string} data - The input string to be processed.
+ * @returns {LineSplitObj[]} An array of objects, each containing the line number and an array of cleaned words.
+ */
 export const generateCleanedLineSplitArr = (data) => {
     let i = 1;
     const newLineSplitArr = data.split('\n').map(l => {
@@ -31,6 +41,11 @@ export const generateCleanedLineSplitArr = (data) => {
     });
     return newLineSplitArr;
 };
+/**
+ * Cleans a search entry string by replacing multiple dots with a single dot, removing any trailing or leading punctuation, and converting to lowercase.
+ * @param {string} searchEntryStr - The search entry string to be cleaned.
+ * @returns {string} The cleaned search entry string.
+ */
 export const cleanSearchEntryStr = (searchEntryStr) => {
     const strLen = searchEntryStr.length;
     let cleanedStr = searchEntryStr.replace(matchMultipleDotRegEx, '.');
@@ -72,6 +87,12 @@ export const generatePreIndexObjArr = (cleanedLineSplitArr, sourceFilePath) => {
     const reducedArr = reduceToUniqueKeys(cleanedIndexArr);
     return reducedArr;
 };
+/**
+ * Reduces an array of SearchIndexEntryArrFormat objects to an array of unique keys and their corresponding values.
+ * @param {SearchIndexEntryArrFormat[]} inputArr - The input array to be processed.
+ * @param {boolean} [isFullArr=false] - A boolean indicating whether the input array contains full arrays or sub-arrays.
+ * @returns {SearchIndexEntryArrFormat[]} An array of unique keys and their corresponding values.
+ */
 export const reduceToUniqueKeys = (inputArr, isFullArr = false) => {
     let reducedArr = [];
     for (const preIndexArr of inputArr) {
@@ -93,8 +114,6 @@ export const reduceToUniqueKeys = (inputArr, isFullArr = false) => {
     return reducedArr;
 };
 export const generateArrOfPreIndexObjsFromFilePathArr = (fileContentArr) => {
-    console.log('\n');
-    console.log('Processing content of files...');
     const resultArr = [];
     for (const file of fileContentArr) {
         const cleanedLineSplitArr = generateCleanedLineSplitArr(file.fileContent);
@@ -102,6 +121,11 @@ export const generateArrOfPreIndexObjsFromFilePathArr = (fileContentArr) => {
     }
     return resultArr;
 };
+/**
+ * Removes duplicate objects from an array of SearchIndexEntryArrFormat objects.
+ * @param {SearchIndexEntryArrFormat[]} inputArr - The input array to be processed.
+ * @returns {SearchIndexEntryArrFormat[]} An array of SearchIndexEntryArrFormat objects with duplicate objects removed.
+ */
 export const removeDuplicateValueObjs = (inputArr) => {
     return inputArr.map(el => {
         const stringifiedValueArr = el[1].map(e => JSON.stringify(e));
@@ -112,6 +136,11 @@ export const removeDuplicateValueObjs = (inputArr) => {
         ];
     });
 };
+/**
+ * Sorts an array of SearchIndexEntryArrFormat objects by the first element of each sub-array.
+ * @param {SearchIndexEntryArrFormat[]} inputArr - The input array to be sorted.
+ * @returns {SearchIndexEntryArrFormat[]} A sorted array of SearchIndexEntryArrFormat objects.
+ */
 export const sortFinalIndexArr = (inputArr) => {
     const sortedArr = inputArr.sort((a, b) => {
         if (a[0] > b[0]) {

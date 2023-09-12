@@ -20,3 +20,27 @@ export const printHelp = () => {
     console.log('To see this help text, use the following command:\n\n');
     console.log('\tnode index.js --help\n');
 };
+export const printError = (err) => {
+    console.log('There has been an error: ', err);
+    console.log('\n');
+};
+export const printPreprocessingFilesMsg = () => {
+    console.log('\n\nProcessing content of files...');
+};
+export const printProcessingMsg = () => {
+    console.log('\n\nProcessing full indexes and collecting sources...');
+    console.log('This might take a while. Thanks for your patience.');
+};
+export const printRemovingDuplicatesMsg = () => {
+    console.log('\n\nRemoving duplicate matches...');
+    console.log('Almost done now.\n\n');
+};
+export const printResultOfWritingFile = (err) => {
+    if (err) {
+        console.log('There has been an error while writing the index to the file: ', err);
+        console.log('\n');
+    }
+    else {
+        console.log('Content has been written to file.\n');
+    }
+};
