@@ -30,9 +30,15 @@ import {
     generateCleanedLineSplitArr,
     SearchIndexEntryArrFormat,
     SearchIndexObj,
-    FileContetntObj,
+    FileContentObj,
     generateArrOfPreIndexObjsFromFilePathArr
 } from './data-processing.js';
+
+import { 
+  generateFilePathArr,
+  generateFileContentObjArr,
+  writeSearchIndexObjToJsonFile
+ } from './read-write-files.js';
 
 import { processArgsAndExecuteMode, UserInputResultObj } from './cli-input.js';
 
@@ -41,29 +47,8 @@ let targetPath: string = '';
 
 const stopSignal$$ = new Subject();
 
-const generateFilePathArr = (dirArr: string[]): string[] => {
-  const fileNameArr: string[][] = [];
-  for (const dir of dirArr) {
-    const filesOfDirArrEntryArr = readdirSync(dir);
-    for (const fileName of filesOfDirArrEntryArr) {
-      fileNameArr.push([dir, fileName]);
-    }
-  }
-  return fileNameArr.map(([dir, fileName]) => `${dir}/${fileName}`);
-};
 
 
-const writeSearchIndexObjToJsonFile = (searchIndexArr: SearchIndexObj[], trgtP: string) => {
-  const jsonObj = JSON.stringify(searchIndexArr);
-  writeFile(trgtP, jsonObj, 'utf8', (err) => {
-    if (err) {
-      console.log('There has been an error: ', err);
-      console.log('\n');
-    } else {
-      console.log('Content has been written to file.\n');
-    }
-  });
-};
 
 const handleResultOfUserInput = (userInputResultObj: UserInputResultObj) => {
   if (userInputResultObj.mode === 'HELP') {
@@ -85,23 +70,14 @@ const main = () => {
       tap(() => printFrontMatter()),
       switchMap(() => from(processArgsAndExecuteMode())),
       tap((userInputResultObj: UserInputResultObj) => handleResultOfUserInput(userInputResultObj)),
+      // TODO: remove filter. Should be unnecessary after checking for both HELP and ERROR modes in handleResultOfUserInput() above.
       filter((userInputResultObj: UserInputResultObj) => {
         return userInputResultObj.mode !== 'HELP' && userInputResultObj.mode !== 'ERROR'
       }),
       map(() => generateFilePathArr(sourcePaths)),
       tap((filePathArr: string[]) => printFilePaths(filePathArr)),
-      map((filePathArr: string[]): FileContetntObj[] => {
-        const fileContentArr: FileContetntObj[] = [];
-        console.log('Reading files:')
-        for (const filePath of filePathArr) {
-          fileContentArr.push({
-            fileContent: readFileSync(filePath, 'utf8'),
-            filePath
-          })
-        }
-        return fileContentArr;
-      }),
-      map((fileContentArr: FileContetntObj[]) => {
+      map((filePathArr: string[]): FileContentObj[] => generateFileContentObjArr(filePathArr)),
+      map((fileContentArr: FileContentObj[]) => {
         return generateArrOfPreIndexObjsFromFilePathArr(fileContentArr);
       }),
       map((preIndexObjArr) => {

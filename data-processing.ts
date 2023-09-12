@@ -8,7 +8,7 @@ export interface SourceEntryObj {
     line: number;
 }
 
-export interface FileContetntObj {
+export interface FileContentObj {
     fileContent: string;
     filePath: string;
 }
@@ -25,10 +25,12 @@ export interface SearchIndexObj {
 }
 
 
+
 const matchSymbolsRegEx = /[^a-zA-Z0-9. ]/g;
 const matchMultipleSpaceRegEx = /\s{2,}/g;
 const matchMultipleDotRegEx = /\.{2,}/g;
 const cleanSearchEntryStrRegEx = /[^a-zA-Z0-9]/g;
+
 
 
 
@@ -160,7 +162,7 @@ export const reduceToUniqueKeys = (inputArr: SearchIndexEntryArrFormat[], isFull
     return reducedArr;
 };
 
-export const generateArrOfPreIndexObjsFromFilePathArr = (fileContentArr: FileContetntObj[]): SearchIndexEntryArrFormat[] => {
+export const generateArrOfPreIndexObjsFromFilePathArr = (fileContentArr: FileContentObj[]): SearchIndexEntryArrFormat[] => {
     console.log('\n');
     console.log('Processing content of files...');
 
