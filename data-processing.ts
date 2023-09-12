@@ -163,9 +163,6 @@ export const reduceToUniqueKeys = (inputArr: SearchIndexEntryArrFormat[], isFull
 };
 
 export const generateArrOfPreIndexObjsFromFilePathArr = (fileContentArr: FileContentObj[]): SearchIndexEntryArrFormat[] => {
-    console.log('\n');
-    console.log('Processing content of files...');
-
     const resultArr: SearchIndexEntryArrFormat[] = [];
     for (const file of fileContentArr) {
         const cleanedLineSplitArr = generateCleanedLineSplitArr(file.fileContent);

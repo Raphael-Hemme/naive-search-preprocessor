@@ -29,3 +29,26 @@ export const printError = (err: string): void => {
     console.log('There has been an error: ', err);
     console.log('\n');
 };
+
+export const printPreprocessingFilesMsg = (): void => {
+    console.log('\n\nProcessing content of files...');
+};
+
+export const printProcessingMsg = (): void => {
+    console.log('\n\nProcessing full indexes and collecting sources...');
+    console.log('This might take a while. Thanks for your patience.');
+};
+
+export const printRemovingDuplicatesMsg = (): void => {
+    console.log('\n\nRemoving duplicate matches...');
+    console.log('Almost done now.\n\n');
+};
+
+export const printResultOfWritingFile = (err?: Error | null): void => {
+    if (err) {
+        console.log('There has been an error while writing the index to the file: ', err);
+        console.log('\n');
+    } else {
+        console.log('Content has been written to file.\n');
+    }
+}

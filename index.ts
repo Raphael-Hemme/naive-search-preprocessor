@@ -1,7 +1,6 @@
 import {
     tap,
     of,
-    filter,
     from,
     map,
     switchMap,
@@ -14,7 +13,10 @@ import {
   printFrontMatter,
   printFilePaths,
   printHelp,
-  printError
+  printError,
+  printPreprocessingFilesMsg,
+  printProcessingMsg,
+  printRemovingDuplicatesMsg
 } from './cli-output.js';
 
 import {
@@ -54,50 +56,49 @@ const handleResultOfUserInput = (userInputResultObj: UserInputResultObj) => {
     sourcePaths = userInputResultObj.sourcePaths.slice();
     targetPath = userInputResultObj.targetPath;
   }
-}
+};
+
+/**
+ * Sorts the cleaned pre-object array and writes the resulting search index to a JSON file.
+ * @param cleanedPreObjArr - The cleaned pre-object array to sort and write to a JSON file.
+ */
+const sortAndWriteIndex = (cleanedPreObjArr: SearchIndexEntryArrFormat[]) => {
+  const sortedCleanedPreObjArr: SearchIndexEntryArrFormat[] = sortFinalIndexArr(cleanedPreObjArr);
+
+  const indexArr: SearchIndexObj[] = sortedCleanedPreObjArr.map((el: SearchIndexEntryArrFormat) => {
+    return {
+      searchTerm: el[0],
+      searchResults: el[1]
+    };
+  });
+
+  writeSearchIndexObjToJsonFile(indexArr, targetPath);
+  stopSignal$$.next('STOP');
+};
 
 const main = () => {
-  of('start')
+  of('START')
     .pipe(
       takeUntil(stopSignal$$),
       tap(() => printFrontMatter()),
       switchMap(() => from(processArgsAndExecuteMode())),
       tap((userInputResultObj: UserInputResultObj) => handleResultOfUserInput(userInputResultObj)),
-      // TODO: remove filter. Should be unnecessary after checking for both HELP and ERROR modes in handleResultOfUserInput() above.
-      filter((userInputResultObj: UserInputResultObj) => {
-        return userInputResultObj.mode !== 'HELP' && userInputResultObj.mode !== 'ERROR'
-      }),
       map(() => generateFilePathArr(sourcePaths)),
       tap((filePathArr: string[]) => printFilePaths(filePathArr)),
       map((filePathArr: string[]): FileContentObj[] => generateFileContentObjArr(filePathArr)),
       map((fileContentArr: FileContentObj[]) => {
+        printPreprocessingFilesMsg();
         return generateArrOfPreIndexObjsFromFilePathArr(fileContentArr);
       }),
       map((preIndexObjArr) => {
-        console.log('\n\nProcessing full indexes and collecting sources...');
-        console.log('This will take a while. Thanks for your patience.\n');
-        const uniqueKeysArr = reduceToUniqueKeys(preIndexObjArr, true);
-        return uniqueKeysArr;
+        printProcessingMsg();
+        return reduceToUniqueKeys(preIndexObjArr, true);
       }),
       map((uniqueKeysArr) => {
-        console.log('\nRemoving duplicate matches...');
-        console.log('Almost done now.\n\n');
-        const cleanedPreObjArr = removeDuplicateValueObjs(uniqueKeysArr);
-        return cleanedPreObjArr; 
+        printRemovingDuplicatesMsg();
+        return removeDuplicateValueObjs(uniqueKeysArr);
       }),
-      tap((cleanedPreObjArr: SearchIndexEntryArrFormat[]) => {
-        const sortedCleanedPreObjArr = sortFinalIndexArr(cleanedPreObjArr);
-
-        const indexArr: SearchIndexObj[] = sortedCleanedPreObjArr.map((el) => {
-          return {
-            searchTerm: el[0],
-            searchResults: el[1]
-          };
-        });
-
-        writeSearchIndexObjToJsonFile(indexArr, targetPath);
-        stopSignal$$.next('STOP');
-      })
+      tap((cleanedPreObjArr: SearchIndexEntryArrFormat[]): void => sortAndWriteIndex(cleanedPreObjArr))
     )
     .subscribe();
 }

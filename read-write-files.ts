@@ -4,6 +4,8 @@ import {
     writeFile 
 } from 'fs';
 
+import { printResultOfWritingFile } from './cli-output.js';
+
 import { FileContentObj, SearchIndexObj } from './data-processing.js';
 
 export const generateFilePathArr = (dirArr: string[]): string[] => {
@@ -31,12 +33,5 @@ export const generateFileContentObjArr = (filePathArr: string[]): FileContentObj
 
 export const writeSearchIndexObjToJsonFile = (searchIndexArr: SearchIndexObj[], trgtP: string) => {
     const jsonObj = JSON.stringify(searchIndexArr);
-    writeFile(trgtP, jsonObj, 'utf8', (err) => {
-      if (err) {
-        console.log('There has been an error: ', err);
-        console.log('\n');
-      } else {
-        console.log('Content has been written to file.\n');
-      }
-    });
+    writeFile(trgtP, jsonObj, 'utf8', (err: Error | null): void => printResultOfWritingFile(err));
 };
