@@ -2,7 +2,7 @@ export const printFrontMatter = (): void => {
     console.log('\n')
     console.log('-- NAIVE SEARCH PREPROCESSOR --')
     console.log('\n')
-}
+};
 
 export const printFilePaths = (filePathArr: string[]): void => {
     console.log('Found the following', filePathArr.length, 'files: ');
@@ -10,7 +10,7 @@ export const printFilePaths = (filePathArr: string[]): void => {
         console.log('\t', filePath);
     }
     console.log('\n')
-}
+};
 
 export const printHelp = (): void => {
     console.log('To run the program in auto mode, use the following command:\n\n');
@@ -23,4 +23,9 @@ export const printHelp = (): void => {
 
     console.log('To see this help text, use the following command:\n\n');
     console.log('\tnode index.js --help\n');
-}
+};
+
+export const printError = (err: string): void => {
+    console.log('There has been an error: ', err);
+    console.log('\n');
+};

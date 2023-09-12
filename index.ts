@@ -19,11 +19,11 @@ import {
 import {
   printFrontMatter,
   printFilePaths,
-  printHelp
+  printHelp,
+  printError
 } from './cli-output.js';
 
 import {
-    generatePreIndexObjArr,
     reduceToUniqueKeys,
     removeDuplicateValueObjs,
     sortFinalIndexArr,
@@ -34,7 +34,7 @@ import {
     generateArrOfPreIndexObjsFromFilePathArr
 } from './data-processing.js';
 
-import { processArgsAndExecuteMode, SourceAndTargetPathObj } from './cli-input.js';
+import { processArgsAndExecuteMode, UserInputResultObj } from './cli-input.js';
 
 let sourcePaths: string[] = [];
 let targetPath: string = '';
@@ -50,7 +50,7 @@ const generateFilePathArr = (dirArr: string[]): string[] => {
     }
   }
   return fileNameArr.map(([dir, fileName]) => `${dir}/${fileName}`);
-}
+};
 
 
 const writeSearchIndexObjToJsonFile = (searchIndexArr: SearchIndexObj[], trgtP: string) => {
@@ -65,23 +65,28 @@ const writeSearchIndexObjToJsonFile = (searchIndexArr: SearchIndexObj[], trgtP: 
   });
 };
 
+const handleResultOfUserInput = (userInputResultObj: UserInputResultObj) => {
+  if (userInputResultObj.mode === 'HELP') {
+    printHelp();
+    stopSignal$$.next('STOP');
+  } else if (userInputResultObj.mode === 'ERROR') {
+    printError(userInputResultObj.errors.join('\n'));
+    stopSignal$$.next('STOP');
+  } else {
+    sourcePaths = userInputResultObj.sourcePaths.slice();
+    targetPath = userInputResultObj.targetPath;
+  }
+}
+
 const main = () => {
   of('start')
     .pipe(
       takeUntil(stopSignal$$),
       tap(() => printFrontMatter()),
       switchMap(() => from(processArgsAndExecuteMode())),
-      tap((sourceAndTargetPathObj: SourceAndTargetPathObj) => {
-        if (sourceAndTargetPathObj.mode === 'HELP') {
-          printHelp();
-          stopSignal$$.next('STOP');
-        } else {
-          sourcePaths = sourceAndTargetPathObj.sourcePaths.slice();
-          targetPath = sourceAndTargetPathObj.targetPath;
-        }
-      }),
-      filter((sourceAndTargetPathObj: SourceAndTargetPathObj) => {
-        return sourceAndTargetPathObj.mode !== 'HELP' && sourceAndTargetPathObj.mode !== 'ERROR'
+      tap((userInputResultObj: UserInputResultObj) => handleResultOfUserInput(userInputResultObj)),
+      filter((userInputResultObj: UserInputResultObj) => {
+        return userInputResultObj.mode !== 'HELP' && userInputResultObj.mode !== 'ERROR'
       }),
       map(() => generateFilePathArr(sourcePaths)),
       tap((filePathArr: string[]) => printFilePaths(filePathArr)),

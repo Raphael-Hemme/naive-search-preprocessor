@@ -6,7 +6,7 @@ import readline from 'readline';
 
 export type Mode = 'CLI' | 'AUTO' | 'HELP' | 'ERROR'; 
 
-export interface SourceAndTargetPathObj {
+export interface UserInputResultObj {
     sourcePaths: string[];
     targetPath: string;
     errors: string[];
@@ -43,8 +43,8 @@ const selectMode = (allArgs: string[] | null): Mode => {
     };
 }
 
-const extractSourceAndTargetPathsFromArgs = (allArgs: string[] | null, mode: Mode): SourceAndTargetPathObj => {
-    const resultObj: SourceAndTargetPathObj = {
+const extractSourceAndTargetPathsFromArgs = (allArgs: string[] | null, mode: Mode): UserInputResultObj => {
+    const resultObj: UserInputResultObj = {
         sourcePaths: [],
         targetPath: '',
         errors: [],
@@ -141,11 +141,11 @@ const promptForTargetPath = async (): Promise<string> => {
 
 }
 
-export const processArgsAndExecuteMode = async (): Promise<SourceAndTargetPathObj> => {
+export const processArgsAndExecuteMode = async (): Promise<UserInputResultObj> => {
 
     const args = getRelevantScriptArgs();
     const mode = selectMode(args);
-    const resultObj: SourceAndTargetPathObj = extractSourceAndTargetPathsFromArgs(args, mode);
+    const resultObj: UserInputResultObj = extractSourceAndTargetPathsFromArgs(args, mode);
 
     if (mode === 'CLI') {
         if (resultObj.sourcePaths.length < 1) {
