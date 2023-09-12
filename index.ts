@@ -1,10 +1,4 @@
 import {
-    readFileSync,
-    readdirSync,
-    writeFile 
-} from 'fs';
-    
-import {
     tap,
     of,
     filter,
@@ -27,7 +21,6 @@ import {
     reduceToUniqueKeys,
     removeDuplicateValueObjs,
     sortFinalIndexArr,
-    generateCleanedLineSplitArr,
     SearchIndexEntryArrFormat,
     SearchIndexObj,
     FileContentObj,
