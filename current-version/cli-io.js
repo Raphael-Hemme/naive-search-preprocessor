@@ -159,12 +159,12 @@ export const processArgsAndExecuteMode = () => __awaiter(void 0, void 0, void 0,
 // ----------------- CLI-OUPUT -----------------
 export const printFrontMatter = () => {
     const terminalColumns = process.stdout.columns;
-    const bannerWidth = 33;
-    const bannerPaddingColumns = Math.floor((terminalColumns - bannerWidth) / 2);
+    const bannerWidth = 35;
+    const bannerPaddingColumns = Math.floor((terminalColumns - bannerWidth) / 2 - 1);
     const bannerPadding = ' '.repeat(bannerPaddingColumns);
     console.log('\n');
     console.log(bannerPadding + '┌─────────────────────────────────┐');
-    console.log(bannerPadding + '│     NAIVE SEARCH PREPROCESSOR   │');
+    console.log(bannerPadding + '│    NAIVE SEARCH PREPROCESSOR    │');
     console.log(bannerPadding + '└─────────────────────────────────┘');
     console.log('\n');
 };

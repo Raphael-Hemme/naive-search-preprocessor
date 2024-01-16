@@ -8,8 +8,7 @@ const generatePartialEntries = (entry) => {
     for (let strLen = entry.length; strLen > 0; strLen--) {
         partialsArr.push(entry.slice(0, strLen));
     }
-    ;
-    return (partialsArr);
+    return partialsArr;
 };
 /**
  * Cleans up a string by replacing symbols with spaces, removing extra spaces, and trimming the result.
@@ -18,8 +17,8 @@ const generatePartialEntries = (entry) => {
  */
 export const cleanUpLineStr = (lineStr) => {
     return lineStr
-        .replace(matchSymbolsRegEx, ' ')
-        .replace(matchMultipleSpaceRegEx, ' ')
+        .replace(matchSymbolsRegEx, " ")
+        .replace(matchMultipleSpaceRegEx, " ")
         .trim();
 };
 /**
@@ -29,12 +28,12 @@ export const cleanUpLineStr = (lineStr) => {
  */
 export const generateCleanedLineSplitArr = (data) => {
     let i = 1;
-    const newLineSplitArr = data.split('\n').map(l => {
+    const newLineSplitArr = data.split("\n").map((l) => {
         const cleanedLineStr = cleanUpLineStr(l);
-        const cleanedLineStrArr = cleanedLineStr.split(' ');
+        const cleanedLineStrArr = cleanedLineStr.split(" ");
         const result = {
             line: i,
-            contentArr: cleanedLineStrArr
+            contentArr: cleanedLineStrArr,
         };
         i += 1;
         return result;
@@ -48,7 +47,7 @@ export const generateCleanedLineSplitArr = (data) => {
  */
 export const cleanSearchEntryStr = (searchEntryStr) => {
     const strLen = searchEntryStr.length;
-    let cleanedStr = searchEntryStr.replace(matchMultipleDotRegEx, '.');
+    let cleanedStr = searchEntryStr.replace(matchMultipleDotRegEx, ".");
     if (cleanSearchEntryStrRegEx.test(searchEntryStr[strLen - 1])) {
         cleanedStr = searchEntryStr.slice(0, strLen - 2);
     }
@@ -76,14 +75,14 @@ export const generatePreIndexObjArr = (cleanedLineSplitArr, sourceFilePath) => {
                 [
                     {
                         file: sourceFilePath,
-                        line: lineObj.line
-                    }
-                ]
+                        line: lineObj.line,
+                    },
+                ],
             ]);
         }
     }
     // delete entries with emty strings (can happen when multiple space characters follow in a row and space is used as seperator)
-    const cleanedIndexArr = indexArr.filter(el => el[0]);
+    const cleanedIndexArr = indexArr.filter((el) => el[0]);
     const reducedArr = reduceToUniqueKeys(cleanedIndexArr);
     return reducedArr;
 };
@@ -96,21 +95,20 @@ export const generatePreIndexObjArr = (cleanedLineSplitArr, sourceFilePath) => {
 export const reduceToUniqueKeys = (inputArr, isFullArr = false) => {
     let reducedArr = [];
     for (const preIndexArr of inputArr) {
-        const duplicateKeyEntrysArr = inputArr.filter(el => el[0] === preIndexArr[0]);
-        const subArrToPush = duplicateKeyEntrysArr.map(el => isFullArr ? el[1] : el[1].flat()).flat();
+        const duplicateKeyEntrysArr = inputArr.filter((el) => el[0] === preIndexArr[0]);
+        const subArrToPush = duplicateKeyEntrysArr
+            .map((el) => (isFullArr ? el[1] : el[1].flat()))
+            .flat();
         if (duplicateKeyEntrysArr.length > 0) {
-            reducedArr.push([
-                preIndexArr[0],
-                subArrToPush
-            ]);
+            reducedArr.push([preIndexArr[0], subArrToPush]);
         }
         else {
             reducedArr.push(preIndexArr);
         }
     }
-    const stringifiedArr = reducedArr.map(el => JSON.stringify(el));
+    const stringifiedArr = reducedArr.map((el) => JSON.stringify(el));
     const reducedStringifiedArr = Array.from(new Set(stringifiedArr));
-    reducedArr = reducedStringifiedArr.map(el => JSON.parse(el));
+    reducedArr = reducedStringifiedArr.map((el) => JSON.parse(el));
     return reducedArr;
 };
 export const generateArrOfPreIndexObjsFromFilePathArr = (fileContentArr) => {
@@ -127,13 +125,10 @@ export const generateArrOfPreIndexObjsFromFilePathArr = (fileContentArr) => {
  * @returns {SearchIndexEntryArrFormat[]} An array of SearchIndexEntryArrFormat objects with duplicate objects removed.
  */
 export const removeDuplicateValueObjs = (inputArr) => {
-    return inputArr.map(el => {
-        const stringifiedValueArr = el[1].map(e => JSON.stringify(e));
-        const filteredValueArr = Array.from(new Set(stringifiedValueArr)).map(el => JSON.parse(el));
-        return [
-            el[0],
-            filteredValueArr
-        ];
+    return inputArr.map((el) => {
+        const stringifiedValueArr = el[1].map((e) => JSON.stringify(e));
+        const filteredValueArr = Array.from(new Set(stringifiedValueArr)).map((el) => JSON.parse(el));
+        return [el[0], filteredValueArr];
     });
 };
 /**
