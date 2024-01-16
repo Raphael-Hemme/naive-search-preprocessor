@@ -1,19 +1,19 @@
-import { tap, of, from, map, switchMap, Subject, takeUntil } from 'rxjs';
-import { printFrontMatter, printFilePaths, printHelp, printError, printPreprocessingFilesMsg, printProcessingMsg, printRemovingDuplicatesMsg } from './cli-output.js';
-import { reduceToUniqueKeys, removeDuplicateValueObjs, sortFinalIndexArr, generateArrOfPreIndexObjsFromFilePathArr } from './data-processing.js';
-import { generateFilePathArr, generateFileContentObjArr, writeSearchIndexObjToJsonFile } from './read-write-files.js';
-import { processArgsAndExecuteMode } from './cli-input.js';
+import { tap, of, from, map, switchMap, Subject, takeUntil } from "rxjs";
+import { printFrontMatter, printFilePaths, printHelp, printError, printPreprocessingFilesMsg, printProcessingMsg, printRemovingDuplicatesMsg, } from "./cli-io.js";
+import { reduceToUniqueKeys, removeDuplicateValueObjs, sortFinalIndexArr, generateArrOfPreIndexObjsFromFilePathArr, } from "./data-processing.js";
+import { generateFilePathArr, generateFileContentObjArr, writeSearchIndexObjToJsonFile, } from "./file-io.js";
+import { processArgsAndExecuteMode } from "./cli-io.js";
 let sourcePaths = [];
-let targetPath = '';
+let targetPath = "";
 const stopSignal$$ = new Subject();
 const handleResultOfUserInput = (userInputResultObj) => {
-    if (userInputResultObj.mode === 'HELP') {
+    if (userInputResultObj.mode === "HELP") {
         printHelp();
-        stopSignal$$.next('STOP');
+        stopSignal$$.next("STOP");
     }
-    else if (userInputResultObj.mode === 'ERROR') {
-        printError(userInputResultObj.errors.join('\n'));
-        stopSignal$$.next('STOP');
+    else if (userInputResultObj.mode === "ERROR") {
+        printError(userInputResultObj.errors.join("\n"));
+        stopSignal$$.next("STOP");
     }
     else {
         sourcePaths = userInputResultObj.sourcePaths.slice();
@@ -29,14 +29,14 @@ const sortAndWriteIndex = (cleanedPreObjArr) => {
     const indexArr = sortedCleanedPreObjArr.map((el) => {
         return {
             searchTerm: el[0],
-            searchResults: el[1]
+            searchResults: el[1],
         };
     });
     writeSearchIndexObjToJsonFile(indexArr, targetPath);
-    stopSignal$$.next('STOP');
+    stopSignal$$.next("STOP");
 };
 const main = () => {
-    of('START')
+    of("START")
         .pipe(takeUntil(stopSignal$$), tap(() => printFrontMatter()), switchMap(() => from(processArgsAndExecuteMode())), tap((userInputResultObj) => handleResultOfUserInput(userInputResultObj)), map(() => generateFilePathArr(sourcePaths)), tap((filePathArr) => printFilePaths(filePathArr)), map((filePathArr) => generateFileContentObjArr(filePathArr)), map((fileContentArr) => {
         printPreprocessingFilesMsg();
         return generateArrOfPreIndexObjsFromFilePathArr(fileContentArr);
