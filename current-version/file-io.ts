@@ -32,7 +32,7 @@ export const generateFilePathArr = (dirArr: string[]): string[] => {
  */
 export const generateFileContentObjArr = (filePathArr: string[]): FileContentObj[] => {
     const fileContentArr: FileContentObj[] = [];
-    console.log('Reading files:')
+    console.log('Reading files...')
     for (const filePath of filePathArr) {
       fileContentArr.push({
         fileContent: readFileSync(filePath, 'utf8'),

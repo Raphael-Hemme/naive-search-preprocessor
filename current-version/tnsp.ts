@@ -1,4 +1,4 @@
-import { tap, of, from, map, switchMap, Subject, takeUntil } from "rxjs";
+import { tap, of, from, map, switchMap, Subject, takeUntil, filter } from "rxjs";
 
 import {
   printFrontMatter,
@@ -76,6 +76,10 @@ const main = () => {
       tap((userInputResultObj: UserInputResultObj) =>
         handleResultOfUserInput(userInputResultObj)
       ),
+      filter((userInputResultObj: UserInputResultObj) => {
+        return userInputResultObj.mode === 'AUTO' 
+          || userInputResultObj.mode === 'CLI'
+      }),
       map(() => generateFilePathArr(sourcePaths)),
       tap((filePathArr: string[]) => printFilePaths(filePathArr)),
       map((filePathArr: string[]): FileContentObj[] =>

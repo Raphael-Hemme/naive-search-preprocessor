@@ -176,8 +176,14 @@ export const processArgsAndExecuteMode = async (): Promise<UserInputResultObj> =
 // ----------------- CLI-OUPUT -----------------
 
 export const printFrontMatter = (): void => {
+  const terminalColumns = process.stdout.columns;
+  const bannerWidth = 33;
+  const bannerPaddingColumns = Math.floor((terminalColumns - bannerWidth) / 2);
+  const bannerPadding = ' '.repeat(bannerPaddingColumns);
   console.log('\n')
-  console.log('-- NAIVE SEARCH PREPROCESSOR --')
+  console.log(bannerPadding + '┌─────────────────────────────────┐')
+  console.log(bannerPadding + '│     NAIVE SEARCH PREPROCESSOR   │')
+  console.log(bannerPadding + '└─────────────────────────────────┘')
   console.log('\n')
 };
 
@@ -190,11 +196,11 @@ export const printFilePaths = (filePathArr: string[]): void => {
 };
 
 export const printHelp = (): void => {
-  console.log('To run the program in auto mode, use the following command:\n\n');
+  console.log('To run the script in auto mode, use the following command:\n\n');
   console.log('\tnode index.js --source <source path> --target <target path>\n\n');
   console.log(`where <source path> is the path or a space separated list of paths to the directory / directories containing the files you want to index \nand <target path> is the path to the file you want to write the index to.\n`);
 
-  console.log('To run the program in interactive mode / CLI mode, use the following command:\n\n');
+  console.log('To run the script in interactive mode / CLI mode, use the following command:\n\n');
   console.log('\tnode index.js\n');
   console.log('You will then be prompted to enter the paths to the source files and the target file.\n');
 

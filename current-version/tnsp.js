@@ -1,4 +1,4 @@
-import { tap, of, from, map, switchMap, Subject, takeUntil } from "rxjs";
+import { tap, of, from, map, switchMap, Subject, takeUntil, filter } from "rxjs";
 import { printFrontMatter, printFilePaths, printHelp, printError, printPreprocessingFilesMsg, printProcessingMsg, printRemovingDuplicatesMsg, } from "./cli-io.js";
 import { reduceToUniqueKeys, removeDuplicateValueObjs, sortFinalIndexArr, generateArrOfPreIndexObjsFromFilePathArr, } from "./data-processing.js";
 import { generateFilePathArr, generateFileContentObjArr, writeSearchIndexObjToJsonFile, } from "./file-io.js";
@@ -37,7 +37,10 @@ const sortAndWriteIndex = (cleanedPreObjArr) => {
 };
 const main = () => {
     of("START")
-        .pipe(takeUntil(stopSignal$$), tap(() => printFrontMatter()), switchMap(() => from(processArgsAndExecuteMode())), tap((userInputResultObj) => handleResultOfUserInput(userInputResultObj)), map(() => generateFilePathArr(sourcePaths)), tap((filePathArr) => printFilePaths(filePathArr)), map((filePathArr) => generateFileContentObjArr(filePathArr)), map((fileContentArr) => {
+        .pipe(takeUntil(stopSignal$$), tap(() => printFrontMatter()), switchMap(() => from(processArgsAndExecuteMode())), tap((userInputResultObj) => handleResultOfUserInput(userInputResultObj)), filter((userInputResultObj) => {
+        return userInputResultObj.mode === 'AUTO'
+            || userInputResultObj.mode === 'CLI';
+    }), map(() => generateFilePathArr(sourcePaths)), tap((filePathArr) => printFilePaths(filePathArr)), map((filePathArr) => generateFileContentObjArr(filePathArr)), map((fileContentArr) => {
         printPreprocessingFilesMsg();
         return generateArrOfPreIndexObjsFromFilePathArr(fileContentArr);
     }), map((preIndexObjArr) => {
