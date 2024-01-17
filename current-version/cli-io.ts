@@ -17,7 +17,7 @@ export interface UserInputResultObj {
 const getRelevantScriptArgs = (): string[] | null => {
   const args = argv.slice(2);
   if (args.length < 1) {
-    console.log('You did not specify any source paths or a target file. Entering CLI mode.');
+    stdout.write('You did not specify any source paths or a target file. Entering CLI mode. \n');
     return null;
   }
   return args;
@@ -102,7 +102,7 @@ const promptForSourcePaths = async (): Promise<string[]> => {
     output: stdout
   });
 
-  console.log('Please enter the paths to the source files you want to index. Enter "done" when you are finished.');
+  stdout.write('Please enter the paths to the source files you want to index. Enter "done" when you are finished. \n');
   while (true) {
     const answer = await new Promise<string>(resolve => rl.question('', resolve));
     if (answer === 'done') {
@@ -113,7 +113,7 @@ const promptForSourcePaths = async (): Promise<string[]> => {
   }
 
   if (sourcePaths.length < 1) {
-    console.log('You did not specify any source paths.');
+    stdout.write('You did not specify any source paths. \n');
     return await promptForSourcePaths();
   } else {
     return sourcePaths;
@@ -126,12 +126,12 @@ const promptForTargetPath = async (): Promise<string> => {
     output: stdout
   });
 
-  console.log('Please enter the path to the target file.');
+  stdout.write('Please enter the path to the target file. \n');
   const answer = await new Promise<string>(resolve => rl.question('', resolve));
   rl.close();
 
   if (answer === '') {
-    console.log('You did not specify a target path.');
+    stdout.write('You did not specify a target path. \n');
     return await promptForTargetPath();
   } else {
     return answer;
@@ -157,16 +157,16 @@ export const processArgsAndExecuteMode = async (): Promise<UserInputResultObj> =
         resultObj.errors = resultObj.errors.filter(error => error !== 'missing target path');
       }
     }
-    console.log('Thanks for your input. Exiting CLI Mode. Starting indexing process now.');
+    stdout.write('Thanks for your input. Exiting CLI Mode. Starting indexing process now.\n');
     resultObj.mode = 'AUTO';
 
   } else if (mode === 'AUTO') {
-    console.log('Entering AUTO Mode. Starting indexing process now.');
+    stdout.write('Entering AUTO Mode. Starting indexing process now.\n');
   } else if (mode === 'HELP') {
-    console.log('Entering HELP Mode.');
+    stdout.write('Entering HELP Mode.\n');
   } else {
-    console.log('Entering ERROR Mode.');
-    resultObj.errors.push('Something went wrong. Please check your input and try again.');
+    stdout.write('Entering ERROR Mode.\n');
+    resultObj.errors.push('Something went wrong. Please check your input and try again.\n');
   }
 
   return resultObj;
@@ -189,9 +189,9 @@ export const printFrontMatter = (): void => {
 };
 
 export const printFilePaths = (filePathArr: string[]): void => {
-  stdout.write('Found the following' + filePathArr.length + 'files: ');
+  stdout.write('Found the following' + filePathArr.length + 'files: \n');
   for (const filePath of filePathArr) {
-    stdout.write('\t' + filePath);
+    stdout.write('\t' + filePath + '\n');
   }
   stdout.write('\n')
 };
@@ -218,8 +218,8 @@ export const printPreprocessingFilesMsg = (): void => {
 };
 
 export const printProcessingMsg = (): void => {
-  stdout.write('\n\nProcessing full indexes and collecting sources...');
-  stdout.write('This might take a while. Thanks for your patience.');
+  stdout.write('\n\nProcessing full indexes and collecting sources... \n');
+  stdout.write('This might take a while. Thanks for your patience.\n');
 };
 
 export const printRemovingDuplicatesMsg = (): void => {
