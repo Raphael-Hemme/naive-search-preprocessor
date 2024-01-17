@@ -1,4 +1,4 @@
-import process from 'process';
+import { argv, stdout, stdin } from 'process';
 import readline from 'readline';
 
 
@@ -15,7 +15,7 @@ export interface UserInputResultObj {
 // ----------------- CLI-INPUT -----------------
 
 const getRelevantScriptArgs = (): string[] | null => {
-  const args = process.argv.slice(2);
+  const args = argv.slice(2);
   if (args.length < 1) {
     console.log('You did not specify any source paths or a target file. Entering CLI mode.');
     return null;
@@ -98,8 +98,8 @@ const extractSourceAndTargetPathsFromArgs = (allArgs: string[] | null, mode: Mod
 const promptForSourcePaths = async (): Promise<string[]> => {
   const sourcePaths: string[] = [];
   const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
+    input: stdin,
+    output: stdout
   });
 
   console.log('Please enter the paths to the source files you want to index. Enter "done" when you are finished.');
@@ -122,8 +122,8 @@ const promptForSourcePaths = async (): Promise<string[]> => {
 
 const promptForTargetPath = async (): Promise<string> => {
   const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
+    input: stdin,
+    output: stdout
   });
 
   console.log('Please enter the path to the target file.');
@@ -175,63 +175,62 @@ export const processArgsAndExecuteMode = async (): Promise<UserInputResultObj> =
 // ----------------- CLI-OUPUT -----------------
 
 export const printFrontMatter = (): void => {
-  const terminalColumns = process.stdout.columns;
+  const terminalColumns = stdout.columns;
   const bannerWidth = 35;
   // subtract 1 for the start of line character
   const bannerPaddingColumns = Math.floor((terminalColumns - bannerWidth) / 2 - 1);
   const bannerPadding = ' '.repeat(bannerPaddingColumns);
-  console.log('\n')
-  console.log(bannerPadding + '┌─────────────────────────────────┐')
-  console.log(bannerPadding + '│    NAIVE SEARCH PREPROCESSOR    │')
-  console.log(bannerPadding + '└─────────────────────────────────┘')
-  console.log('\n')
+
+  stdout.write('\n')
+  stdout.write(bannerPadding + '┌─────────────────────────────────┐' + '\n')
+  stdout.write(bannerPadding + '│    NAIVE SEARCH PREPROCESSOR    │' + '\n')
+  stdout.write(bannerPadding + '└─────────────────────────────────┘' + '\n')
+  stdout.write('\n')
 };
 
 export const printFilePaths = (filePathArr: string[]): void => {
-  console.log('Found the following', filePathArr.length, 'files: ');
+  stdout.write('Found the following' + filePathArr.length + 'files: ');
   for (const filePath of filePathArr) {
-    console.log('\t', filePath);
+    stdout.write('\t' + filePath);
   }
-  console.log('\n')
+  stdout.write('\n')
 };
 
 export const printHelp = (): void => {
-  console.log('To run the script in auto mode, use the following command:\n\n');
-  console.log('\tnode index.js --source <source path> --target <target path>\n\n');
-  console.log(`where <source path> is the path or a space separated list of paths to the directory / directories containing the files you want to index \nand <target path> is the path to the file you want to write the index to.\n`);
+  stdout.write('To run the script in auto mode, use the following command:\n\n');
+  stdout.write('\tnode index.js --source <source path> --target <target path>\n\n');
+  stdout.write(`where <source path> is the path or a space separated list of paths to the directory / directories containing the files you want to index and <target path> is the path to the file you want to write the index to.\n`);
 
-  console.log('To run the script in interactive mode / CLI mode, use the following command:\n\n');
-  console.log('\tnode index.js\n');
-  console.log('You will then be prompted to enter the paths to the source files and the target file.\n');
+  stdout.write('To run the script in interactive mode / CLI mode, use the following command:\n\n');
+  stdout.write('\tnode index.js\n');
+  stdout.write('You will then be prompted to enter the paths to the source files and the target file.\n');
 
-  console.log('To see this help text, use the following command:\n\n');
-  console.log('\tnode index.js --help\n');
+  stdout.write('To see this help text, use the following command:\n\n');
+  stdout.write('\tnode index.js --help\n');
 };
 
 export const printError = (err: string): void => {
-  console.log('There has been an error: ', err);
-  console.log('\n');
+  stdout.write('There has been an error: \n' + err + '\n\n');
 };
 
 export const printPreprocessingFilesMsg = (): void => {
-  console.log('\n\nProcessing content of files...');
+  stdout.write('\n\nProcessing content of files...');
 };
 
 export const printProcessingMsg = (): void => {
-  console.log('\n\nProcessing full indexes and collecting sources...');
-  console.log('This might take a while. Thanks for your patience.');
+  stdout.write('\n\nProcessing full indexes and collecting sources...');
+  stdout.write('This might take a while. Thanks for your patience.');
 };
 
 export const printRemovingDuplicatesMsg = (): void => {
-  console.log('\n\nRemoving duplicate matches...');
-  console.log('Almost done now.\n\n');
+  stdout.write('\n\nRemoving duplicate matches...');
+  stdout.write('Almost done now.\n\n');
 };
 
 export const printResultOfWritingFile = (err?: Error | null): void => {
   if (err) {
-    console.log('There has been an error while writing the index to the file: ', err);
-    console.log('\n');
+    stdout.write('There has been an error while writing the index to the file: \n' + err + '\n');
   } else {
-    console.log('Content has been written to file.\n');
+    stdout.write('Content has been written to file.\n');
   }
 }
