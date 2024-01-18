@@ -1,12 +1,3 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 import { argv, stdout, stdin } from 'process';
 import readline from 'readline';
 // ----------------- CLI-INPUT -----------------
@@ -85,7 +76,7 @@ const extractSourceAndTargetPathsFromArgs = (allArgs, mode) => {
     }
     return resultObj;
 };
-const promptForSourcePaths = () => __awaiter(void 0, void 0, void 0, function* () {
+const promptForSourcePaths = async () => {
     const sourcePaths = [];
     const rl = readline.createInterface({
         input: stdin,
@@ -93,7 +84,7 @@ const promptForSourcePaths = () => __awaiter(void 0, void 0, void 0, function* (
     });
     stdout.write('Please enter the paths to the source files you want to index. Enter "done" when you are finished. \n');
     while (true) {
-        const answer = yield new Promise(resolve => rl.question('', resolve));
+        const answer = await new Promise(resolve => rl.question('', resolve));
         if (answer === 'done') {
             rl.close();
             break;
@@ -102,41 +93,41 @@ const promptForSourcePaths = () => __awaiter(void 0, void 0, void 0, function* (
     }
     if (sourcePaths.length < 1) {
         stdout.write('You did not specify any source paths. \n');
-        return yield promptForSourcePaths();
+        return await promptForSourcePaths();
     }
     else {
         return sourcePaths;
     }
-});
-const promptForTargetPath = () => __awaiter(void 0, void 0, void 0, function* () {
+};
+const promptForTargetPath = async () => {
     const rl = readline.createInterface({
         input: stdin,
         output: stdout
     });
     stdout.write('Please enter the path to the target file. \n');
-    const answer = yield new Promise(resolve => rl.question('', resolve));
+    const answer = await new Promise(resolve => rl.question('', resolve));
     rl.close();
     if (answer === '') {
         stdout.write('You did not specify a target path. \n');
-        return yield promptForTargetPath();
+        return await promptForTargetPath();
     }
     else {
         return answer;
     }
-});
-export const processArgsAndExecuteMode = () => __awaiter(void 0, void 0, void 0, function* () {
+};
+export const processArgsAndExecuteMode = async () => {
     const args = getRelevantScriptArgs();
     const mode = selectMode(args);
     const resultObj = extractSourceAndTargetPathsFromArgs(args, mode);
     if (mode === 'CLI') {
         if (resultObj.sourcePaths.length < 1) {
-            resultObj.sourcePaths = yield promptForSourcePaths();
+            resultObj.sourcePaths = await promptForSourcePaths();
             if (resultObj.sourcePaths) {
                 resultObj.errors = resultObj.errors.filter(error => error !== 'missing source paths');
             }
         }
         if (resultObj.targetPath === '') {
-            resultObj.targetPath = yield promptForTargetPath();
+            resultObj.targetPath = await promptForTargetPath();
             if (resultObj.targetPath) {
                 resultObj.errors = resultObj.errors.filter(error => error !== 'missing target path');
             }
@@ -155,7 +146,7 @@ export const processArgsAndExecuteMode = () => __awaiter(void 0, void 0, void 0,
         resultObj.errors.push('Something went wrong. Please check your input and try again.\n');
     }
     return resultObj;
-});
+};
 // ----------------- CLI-OUPUT -----------------
 export const printFrontMatter = () => {
     const terminalColumns = stdout.columns;
