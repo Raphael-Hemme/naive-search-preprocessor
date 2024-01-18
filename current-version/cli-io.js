@@ -1,6 +1,19 @@
 import { argv, stdout, stdin } from 'process';
 import readline from 'readline';
+// ------------- ARGUMENT VARIABLES ------------
+const SRC_FLAG_L = '--source';
+const SRC_FLAG_S = '-s';
+const TARGET_FLAG_L = '--target';
+const TARGET_FLAG_S = '-t';
 // ----------------- CLI-INPUT -----------------
+/**
+ * Retrieves the relevant script arguments.
+ * The first two arguments are the path to the node executable and the path to the script file.
+ * These are irrelevant for the script therefore they are removed.
+ * If no further arguments are specified, the function prints a message that the script will enter CLI mode
+ * and return null which triggers this in a later step.
+ * @returns An array of string arguments or null if no arguments were specified.
+ */
 const getRelevantScriptArgs = () => {
     const args = argv.slice(2);
     if (args.length < 1) {

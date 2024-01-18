@@ -16,6 +16,7 @@ import { FileContentObj, SearchIndexObj } from './data-processing.js';
 export const generateFilePathArr = (dirArr: string[]): string[] => {
     const fileNameArr: string[][] = [];
     for (const dir of dirArr) {
+      // todo: check if dir is a directory
       const filesOfDirArrEntryArr = readdirSync(dir);
       for (const fileName of filesOfDirArrEntryArr) {
         fileNameArr.push([dir, fileName]);
@@ -48,6 +49,7 @@ export const generateFileContentObjArr = (filePathArr: string[]): FileContentObj
  * @param trgtP The target path of the JSON file.
  */
 export const writeSearchIndexObjToJsonFile = (searchIndexArr: SearchIndexObj[], trgtP: string) => {
+    const cleanedTrgtP = trgtP.replace(/\..*$/, '').concat('.json');
     const jsonObj = JSON.stringify(searchIndexArr);
-    writeFile(trgtP, jsonObj, 'utf8', (err: Error | null): void => printResultOfWritingFile(err));
+    writeFile(cleanedTrgtP, jsonObj, 'utf8', (err: Error | null): void => printResultOfWritingFile(err));
 };

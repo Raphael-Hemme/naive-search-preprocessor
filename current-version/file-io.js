@@ -9,6 +9,7 @@ import { printResultOfWritingFile } from './cli-io.js';
 export const generateFilePathArr = (dirArr) => {
     const fileNameArr = [];
     for (const dir of dirArr) {
+        // todo: check if dir is a directory
         const filesOfDirArrEntryArr = readdirSync(dir);
         for (const fileName of filesOfDirArrEntryArr) {
             fileNameArr.push([dir, fileName]);
@@ -39,6 +40,7 @@ export const generateFileContentObjArr = (filePathArr) => {
  * @param trgtP The target path of the JSON file.
  */
 export const writeSearchIndexObjToJsonFile = (searchIndexArr, trgtP) => {
+    const cleanedTrgtP = trgtP.replace(/\..*$/, '.json');
     const jsonObj = JSON.stringify(searchIndexArr);
-    writeFile(trgtP, jsonObj, 'utf8', (err) => printResultOfWritingFile(err));
+    writeFile(cleanedTrgtP, jsonObj, 'utf8', (err) => printResultOfWritingFile(err));
 };
