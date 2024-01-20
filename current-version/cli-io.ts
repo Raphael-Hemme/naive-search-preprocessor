@@ -1,3 +1,4 @@
+import { existsSync } from 'fs';
 import { argv, stdout, stdin } from 'process';
 import readline from 'readline';
 
@@ -107,6 +108,62 @@ const extractSourceAndTargetPathsFromArgs = (allArgs: string[] | null, mode: Mod
   }
 
   return resultObj;
+}
+
+const extractAndCheckSourcePathsFromArgs = (allArgs: string[]): {path: string, isValid: boolean}[] => {
+  const targetToEndRegEx = /(--target|-t)\s*(.*)/i;
+  const argsStr = allArgs.join(' ');
+  const sourcePathsStr = argsStr
+    .replace(/--source|-s/g, '')
+    .replace(targetToEndRegEx, '')
+    .trim();
+
+  if (sourcePathsStr === '') {
+    return [{
+      path: '',
+      isValid: false,
+    }];
+  } else {
+    const sourcePathsArr = sourcePathsStr.split(' ');
+    const sourcePathsObjArr = sourcePathsArr.map(path => {
+      return {
+        path: path,
+        isValid: existsSync(path),
+      }
+    });
+    return sourcePathsObjArr;
+  }
+}
+
+// Todo: make both extractAndCheck functions able to work with the arguments ordered in any way as long as they are not mixed
+const extractAndCheckTargetPathFromArgs = (allArgs: string[]): {path: string, isValid: boolean}[] => {
+  const targetPathIndex = allArgs.findIndex(arg => arg === '--target' || arg === '-t');
+  if (targetPathIndex === -1) {
+    return [{
+      path: '',
+      isValid: false,
+    }];
+  }
+
+  const targetPathStr = allArgs[targetPathIndex + 1]
+    .trim()
+    // Only take the first path if multiple paths are provided
+    .split(' ')[0]
+    .trim()
+
+  const targetDir = targetPathStr.split('/').slice(0, -1).join('/');
+
+  if (targetPathStr === '') {
+    return [{
+      path: '',
+      isValid: false,
+    }];
+  } else {
+    return [{
+      path: targetPathStr,
+      isValid: existsSync(targetDir),
+    }]
+  }
 }
 
 const promptForSourcePaths = async (): Promise<string[]> => {
