@@ -56,5 +56,5 @@ export const writeSearchIndexObjToJsonFile = (searchIndexArr: SearchIndexObj[], 
       .concat('.json'); // add .json file extension
 
     const jsonObj = JSON.stringify(searchIndexArr);
-    writeFile(cleanedTrgtP, jsonObj, 'utf8', (err: Error | null): void => printResultOfWritingFile(err));
+    writeFile(cleanedTrgtP, jsonObj, 'utf8', (err: Error | null): void => printResultOfWritingFile(cleanedTrgtP, err));
 };

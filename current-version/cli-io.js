@@ -63,18 +63,21 @@ const extractSourceAndTargetPathsFromArgs = (allArgs, mode) => {
             resultObj.errors.push(`invalid source paths: ${pathObj.path}`);
         }
     }
-    if (targetPathsArr.length === 0 || !targetPathsArr[0].isValid) {
-        resultObj.errors.push('missing ${target path');
+    if (targetPathsArr.length === 0) {
+        resultObj.errors.push('missing target path');
     }
     if (targetPathsArr.length > 0 && !targetPathsArr[0].isValid) {
-        resultObj.errors.push(`invalid target path: ${targetPathsArr[0]}`);
+        resultObj.errors.push(`invalid target path: ${targetPathsArr[0].path}`);
     }
+    console.log('------resultObj: ', resultObj);
     if (resultObj.errors.length === 0) {
+        console.log('xxxxxx  entering AUTO mode  xxxxxx');
         resultObj.sourcePaths = sourcePathsArr.map(pathObj => pathObj.path);
         resultObj.targetPath = targetPathsArr[0].path;
         resultObj.mode = 'AUTO';
     }
     else {
+        console.log('xxxxxx  entering CLI mode  xxxxxx');
         resultObj.mode = 'CLI';
     }
     return resultObj;
@@ -95,16 +98,32 @@ const extractAndCheckSourceOrTargetPathsFromArgs = (allArgs, flagA, flagB) => {
                 isValid: false,
             }];
     }
-    const sliceEndIndex = pathForBIsMissing || !pathForAIsAfterPathForB
+    const sliceEndIndex = pathForBIsMissing || pathForAIsAfterPathForB
         ? undefined
         : startIndicatorForB;
     const pathsArrForA = allArgs.slice(startIndicatorForA + 1, sliceEndIndex);
     return pathsArrForA.map(path => {
         return {
             path: path,
-            isValid: existsSync(path),
+            isValid: checkIfPathIsValid(path, flagToRegExMap.source.test(flagA)),
         };
     });
+};
+const checkIfPathIsValid = (path, isSourceFlag) => {
+    if (isSourceFlag) {
+        return existsSync(path);
+    }
+    else {
+        // if target paths array is returned, check if the directory exists- not the target file
+        let dirPath = path
+            .split('/')
+            .slice(0, -1)
+            .join('/');
+        dirPath = dirPath
+            ? dirPath
+            : './';
+        return existsSync(dirPath);
+    }
 };
 const promptForSourcePaths = async () => {
     const sourcePaths = [];
@@ -126,6 +145,7 @@ const promptForSourcePaths = async () => {
         return await promptForSourcePaths();
     }
     else {
+        console.log('---------> sourcePaths: ', sourcePaths);
         return sourcePaths;
     }
 };
@@ -149,7 +169,7 @@ export const processArgsAndExecuteMode = async () => {
     const args = getRelevantScriptArgs();
     const mode = selectMode(args);
     const resultObj = extractSourceAndTargetPathsFromArgs(args, mode);
-    if (mode === 'CLI') {
+    if (resultObj.mode === 'CLI') {
         if (resultObj.sourcePaths.length < 1) {
             resultObj.sourcePaths = await promptForSourcePaths();
             if (resultObj.sourcePaths) {
@@ -165,10 +185,10 @@ export const processArgsAndExecuteMode = async () => {
         stdout.write('Thanks for your input. Exiting CLI Mode. Starting indexing process now.\n');
         resultObj.mode = 'AUTO';
     }
-    else if (mode === 'AUTO') {
+    else if (resultObj.mode === 'AUTO') {
         stdout.write('Entering AUTO Mode. Starting indexing process now.\n');
     }
-    else if (mode === 'HELP') {
+    else if (resultObj.mode === 'HELP') {
         stdout.write('Entering HELP Mode.\n');
     }
     else {
@@ -221,11 +241,11 @@ export const printRemovingDuplicatesMsg = () => {
     stdout.write('\n\nRemoving duplicate matches...');
     stdout.write('Almost done now.\n\n');
 };
-export const printResultOfWritingFile = (err) => {
+export const printResultOfWritingFile = (targetPath, err) => {
     if (err) {
         stdout.write('There has been an error while writing the index to the file: \n' + err + '\n');
     }
     else {
-        stdout.write('Content has been written to file.\n');
+        stdout.write(`Content has been written to the target file: ${targetPath}\n`);
     }
 };

@@ -44,5 +44,5 @@ export const writeSearchIndexObjToJsonFile = (searchIndexArr, trgtP) => {
         .replace(/\..*$/, '') // remove file extension if present
         .concat('.json'); // add .json file extension
     const jsonObj = JSON.stringify(searchIndexArr);
-    writeFile(cleanedTrgtP, jsonObj, 'utf8', (err) => printResultOfWritingFile(err));
+    writeFile(cleanedTrgtP, jsonObj, 'utf8', (err) => printResultOfWritingFile(cleanedTrgtP, err));
 };
