@@ -49,7 +49,11 @@ const selectMode = (allArgs: string[] | null): Mode => {
   };
 }
 
-const extractSourceAndTargetPathsFromArgs = (allArgs: string[] | null, mode: Mode): UserInputResultObj => {
+const extractSourceAndTargetPathsFromArgs = (
+  allArgs: string[] | null, 
+  mode: Mode
+): UserInputResultObj => {
+
   const resultObj: UserInputResultObj = {
     sourcePaths: [],
     targetPath: '',
@@ -66,37 +70,36 @@ const extractSourceAndTargetPathsFromArgs = (allArgs: string[] | null, mode: Mod
     return resultObj;
   }
 
-  let sourcePathsStartIndicator = allArgs.findIndex(arg => arg === '--source');
-  let targetPathsStartIndicator = allArgs.findIndex(arg => arg === '--target');
+  let sourcePathsArr = extractAndCheckSourceOrTargetPathsFromArgs(allArgs, 'source', 'target');
+  let invalidSourcePaths = sourcePathsArr.filter(pathObj => !pathObj.isValid);
+  let targetPathsArr = extractAndCheckSourceOrTargetPathsFromArgs(allArgs, 'target', 'source');
 
-  if (sourcePathsStartIndicator !== -1 && targetPathsStartIndicator !== -1) {
-    resultObj.sourcePaths = allArgs.slice(sourcePathsStartIndicator + 1, targetPathsStartIndicator);
-    resultObj.targetPath = allArgs[targetPathsStartIndicator + 1];
+  console.log('------sourcePathsArr: ', sourcePathsArr);
+  console.log('------targetPathsArr: ', targetPathsArr);
 
-    if (resultObj.sourcePaths.length < 1) {
-      resultObj.errors.push('missing source paths');
-    }
-    if (resultObj.targetPath === '') {
-      resultObj.errors.push('missing target path');
-    }
-
-    if (resultObj.sourcePaths.length > 0 && resultObj.targetPath !== '') {
-      resultObj.mode = 'AUTO';
-    } else {
-      resultObj.mode = 'CLI';
-    }
-
-  } else if (sourcePathsStartIndicator !== -1 && targetPathsStartIndicator === -1) {
-    resultObj.sourcePaths = allArgs.slice(sourcePathsStartIndicator + 1);
-    resultObj.errors.push('missing target path');
-    resultObj.mode = 'CLI';
-  } else if (sourcePathsStartIndicator === -1 && targetPathsStartIndicator !== -1) {
-    resultObj.targetPath = allArgs[targetPathsStartIndicator + 1];
+  if (sourcePathsArr.length === 0) {
     resultObj.errors.push('missing source paths');
-    resultObj.mode = 'CLI';
+  }
+
+  if (invalidSourcePaths.length > 0) {
+    for (const pathObj of invalidSourcePaths) {
+      resultObj.errors.push(`invalid source paths: ${pathObj.path}`);
+    }
+  }
+
+  if (targetPathsArr.length === 0 || !targetPathsArr[0].isValid) {
+    resultObj.errors.push('missing ${target path');
+  }
+
+  if (targetPathsArr.length > 0 && !targetPathsArr[0].isValid) {
+    resultObj.errors.push(`invalid target path: ${targetPathsArr[0]}`);
+  }
+
+  if (resultObj.errors.length === 0) {
+    resultObj.sourcePaths = sourcePathsArr.map(pathObj => pathObj.path);
+    resultObj.targetPath = targetPathsArr[0].path;
+    resultObj.mode = 'AUTO';
   } else {
-    resultObj.errors.push('missing source paths');
-    resultObj.errors.push('missing target path');
     resultObj.mode = 'CLI';
   }
 

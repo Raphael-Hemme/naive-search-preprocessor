@@ -1,11 +1,6 @@
 import { existsSync } from 'fs';
 import { argv, stdout, stdin } from 'process';
 import readline from 'readline';
-// ------------- ARGUMENT VARIABLES ------------
-const SRC_FLAG_L = '--source';
-const SRC_FLAG_S = '-s';
-const TARGET_FLAG_L = '--target';
-const TARGET_FLAG_S = '-t';
 // ----------------- CLI-INPUT -----------------
 /**
  * Retrieves the relevant script arguments.
@@ -55,92 +50,61 @@ const extractSourceAndTargetPathsFromArgs = (allArgs, mode) => {
         resultObj.mode = 'HELP';
         return resultObj;
     }
-    let sourcePathsStartIndicator = allArgs.findIndex(arg => arg === '--source');
-    let targetPathsStartIndicator = allArgs.findIndex(arg => arg === '--target');
-    if (sourcePathsStartIndicator !== -1 && targetPathsStartIndicator !== -1) {
-        resultObj.sourcePaths = allArgs.slice(sourcePathsStartIndicator + 1, targetPathsStartIndicator);
-        resultObj.targetPath = allArgs[targetPathsStartIndicator + 1];
-        if (resultObj.sourcePaths.length < 1) {
-            resultObj.errors.push('missing source paths');
-        }
-        if (resultObj.targetPath === '') {
-            resultObj.errors.push('missing target path');
-        }
-        if (resultObj.sourcePaths.length > 0 && resultObj.targetPath !== '') {
-            resultObj.mode = 'AUTO';
-        }
-        else {
-            resultObj.mode = 'CLI';
-        }
-    }
-    else if (sourcePathsStartIndicator !== -1 && targetPathsStartIndicator === -1) {
-        resultObj.sourcePaths = allArgs.slice(sourcePathsStartIndicator + 1);
-        resultObj.errors.push('missing target path');
-        resultObj.mode = 'CLI';
-    }
-    else if (sourcePathsStartIndicator === -1 && targetPathsStartIndicator !== -1) {
-        resultObj.targetPath = allArgs[targetPathsStartIndicator + 1];
+    let sourcePathsArr = extractAndCheckSourceOrTargetPathsFromArgs(allArgs, 'source', 'target');
+    let invalidSourcePaths = sourcePathsArr.filter(pathObj => !pathObj.isValid);
+    let targetPathsArr = extractAndCheckSourceOrTargetPathsFromArgs(allArgs, 'target', 'source');
+    console.log('------sourcePathsArr: ', sourcePathsArr);
+    console.log('------targetPathsArr: ', targetPathsArr);
+    if (sourcePathsArr.length === 0) {
         resultObj.errors.push('missing source paths');
-        resultObj.mode = 'CLI';
+    }
+    if (invalidSourcePaths.length > 0) {
+        for (const pathObj of invalidSourcePaths) {
+            resultObj.errors.push(`invalid source paths: ${pathObj.path}`);
+        }
+    }
+    if (targetPathsArr.length === 0 || !targetPathsArr[0].isValid) {
+        resultObj.errors.push('missing ${target path');
+    }
+    if (targetPathsArr.length > 0 && !targetPathsArr[0].isValid) {
+        resultObj.errors.push(`invalid target path: ${targetPathsArr[0]}`);
+    }
+    if (resultObj.errors.length === 0) {
+        resultObj.sourcePaths = sourcePathsArr.map(pathObj => pathObj.path);
+        resultObj.targetPath = targetPathsArr[0].path;
+        resultObj.mode = 'AUTO';
     }
     else {
-        resultObj.errors.push('missing source paths');
-        resultObj.errors.push('missing target path');
         resultObj.mode = 'CLI';
     }
     return resultObj;
 };
-const extractAndCheckSourcePathsFromArgs = (allArgs) => {
-    const targetToEndRegEx = /(--target|-t)\s*(.*)/i;
-    const argsStr = allArgs.join(' ');
-    const sourcePathsStr = argsStr
-        .replace(/--source|-s/g, '')
-        .replace(targetToEndRegEx, '')
-        .trim();
-    if (sourcePathsStr === '') {
+const extractAndCheckSourceOrTargetPathsFromArgs = (allArgs, flagA, flagB) => {
+    const flagToRegExMap = {
+        source: /(--source|-s)/i,
+        target: /(--target|-t)/i
+    };
+    const startIndicatorForA = allArgs.findIndex(arg => arg.match(flagToRegExMap[flagA]));
+    const startIndicatorForB = allArgs.findIndex(arg => arg.match(flagToRegExMap[flagB]));
+    const pathForAIsMissing = startIndicatorForA === -1;
+    const pathForBIsMissing = startIndicatorForB === -1;
+    const pathForAIsAfterPathForB = startIndicatorForA > startIndicatorForB;
+    if (pathForAIsMissing) {
         return [{
                 path: '',
                 isValid: false,
             }];
     }
-    else {
-        const sourcePathsArr = sourcePathsStr.split(' ');
-        const sourcePathsObjArr = sourcePathsArr.map(path => {
-            return {
-                path: path,
-                isValid: existsSync(path),
-            };
-        });
-        return sourcePathsObjArr;
-    }
-};
-// Todo: make both extractAndCheck functions able to work with the arguments ordered in any way as long as they are not mixed
-const extractAndCheckTargetPathFromArgs = (allArgs) => {
-    const targetPathIndex = allArgs.findIndex(arg => arg === '--target' || arg === '-t');
-    if (targetPathIndex === -1) {
-        return [{
-                path: '',
-                isValid: false,
-            }];
-    }
-    const targetPathStr = allArgs[targetPathIndex + 1]
-        .trim()
-        // Only take the first path if multiple paths are provided
-        .split(' ')[0]
-        .trim();
-    const targetDir = targetPathStr.split('/').slice(0, -1).join('/');
-    if (targetPathStr === '') {
-        return [{
-                path: '',
-                isValid: false,
-            }];
-    }
-    else {
-        return [{
-                path: targetPathStr,
-                isValid: existsSync(targetDir),
-            }];
-    }
+    const sliceEndIndex = pathForBIsMissing || !pathForAIsAfterPathForB
+        ? undefined
+        : startIndicatorForB;
+    const pathsArrForA = allArgs.slice(startIndicatorForA + 1, sliceEndIndex);
+    return pathsArrForA.map(path => {
+        return {
+            path: path,
+            isValid: existsSync(path),
+        };
+    });
 };
 const promptForSourcePaths = async () => {
     const sourcePaths = [];
