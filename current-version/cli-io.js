@@ -125,8 +125,8 @@ const checkIfPathIsValid = (path, isSourceFlag) => {
         return existsSync(dirPath);
     }
 };
-const promptForSourcePaths = async () => {
-    const sourcePaths = [];
+const promptForSourcePaths = async (storedSourcePaths = []) => {
+    const sourcePaths = storedSourcePaths.slice();
     const rl = readline.createInterface({
         input: stdin,
         output: stdout
@@ -134,15 +134,30 @@ const promptForSourcePaths = async () => {
     stdout.write('Please enter the paths to the source files you want to index. Enter "done" when you are finished. \n');
     while (true) {
         const answer = await new Promise(resolve => rl.question('', resolve));
-        if (answer === 'done') {
+        if (answer.toLowerCase() === 'done') {
             rl.close();
             break;
         }
         sourcePaths.push(answer);
     }
+    const invalidSourcePaths = sourcePaths.filter(path => !checkIfPathIsValid(path, true));
+    const validSourcePaths = sourcePaths.filter(path => checkIfPathIsValid(path, true));
     if (sourcePaths.length < 1) {
         stdout.write('You did not specify any source paths. \n');
         return await promptForSourcePaths();
+    }
+    else if (invalidSourcePaths.length > 0) {
+        stdout.write('You specified invalid source paths. \n');
+        for (const path of invalidSourcePaths) {
+            const outputStr = '\t' + path + '\n';
+            stdout.write(generateTextRed(outputStr));
+        }
+        stdout.write('The following valid source paths are stored. Would you like to correct one of the invalid paths\n');
+        for (const path of validSourcePaths) {
+            const outputStr = '\t' + path + '\n';
+            stdout.write(generateTextGreen(outputStr));
+        }
+        return await promptForSourcePaths(validSourcePaths);
     }
     else {
         console.log('---------> sourcePaths: ', sourcePaths);
@@ -249,3 +264,6 @@ export const printResultOfWritingFile = (targetPath, err) => {
         stdout.write(`Content has been written to the target file: ${targetPath}\n`);
     }
 };
+// -------------- CLI COLORS --------------
+export const generateTextRed = (text) => `\x1b[31m${text}\x1b[0m`;
+export const generateTextGreen = (text) => `\x1b[32m${text}\x1b[0m`;
