@@ -147,22 +147,25 @@ const promptForSourcePaths = async (storedSourcePaths = []) => {
         return await promptForSourcePaths();
     }
     else if (invalidSourcePaths.length > 0) {
-        stdout.write('You specified invalid source paths. \n');
-        for (const path of invalidSourcePaths) {
-            const outputStr = '\t' + path + '\n';
-            stdout.write(generateTextRed(outputStr));
-        }
-        stdout.write('The following valid source paths are stored. Would you like to correct one of the invalid paths\n');
-        for (const path of validSourcePaths) {
-            const outputStr = '\t' + path + '\n';
-            stdout.write(generateTextGreen(outputStr));
-        }
-        return await promptForSourcePaths(validSourcePaths);
+        return await repromptForInvalidSourcePaths(validSourcePaths, invalidSourcePaths);
     }
     else {
         console.log('---------> sourcePaths: ', sourcePaths);
         return sourcePaths;
     }
+};
+const repromptForInvalidSourcePaths = async (validSourcePaths, invalidSourcePaths) => {
+    stdout.write('You specified invalid source paths. \n');
+    for (const path of invalidSourcePaths) {
+        const outputStr = '   ' + path + '\n';
+        stdout.write(generateTextRed(outputStr));
+    }
+    stdout.write('The following valid source paths are stored. Would you like to correct one of the invalid paths\n');
+    for (const path of validSourcePaths) {
+        const outputStr = '   ' + path + '\n';
+        stdout.write(generateTextGreen(outputStr));
+    }
+    return await promptForSourcePaths(validSourcePaths);
 };
 const promptForTargetPath = async () => {
     const rl = readline.createInterface({
@@ -174,6 +177,10 @@ const promptForTargetPath = async () => {
     rl.close();
     if (answer === '') {
         stdout.write('You did not specify a target path. \n');
+        return await promptForTargetPath();
+    }
+    else if (!checkIfPathIsValid(answer, false)) {
+        stdout.write('You specified an invalid target path. \n');
         return await promptForTargetPath();
     }
     else {
