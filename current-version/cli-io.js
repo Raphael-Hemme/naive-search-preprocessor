@@ -59,15 +59,13 @@ const extractSourceAndTargetPathsFromArgs = (allArgs, mode) => {
         resultObj.errors.push('missing source paths');
     }
     if (invalidSourcePaths.length > 0) {
-        for (const pathObj of invalidSourcePaths) {
-            resultObj.errors.push(`invalid source paths: ${pathObj.path}`);
-        }
+        resultObj.errors.push('invalid source paths');
     }
     if (targetPathsArr.length === 0) {
         resultObj.errors.push('missing target path');
     }
     if (targetPathsArr.length > 0 && !targetPathsArr[0].isValid) {
-        resultObj.errors.push(`invalid target path: ${targetPathsArr[0].path}`);
+        resultObj.errors.push('invalid target path');
     }
     console.log('------resultObj: ', resultObj);
     if (resultObj.errors.length === 0) {
@@ -78,6 +76,8 @@ const extractSourceAndTargetPathsFromArgs = (allArgs, mode) => {
     }
     else {
         console.log('xxxxxx  entering CLI mode  xxxxxx');
+        resultObj.sourcePaths = sourcePathsArr.map(pathObj => pathObj.path);
+        resultObj.targetPath = targetPathsArr[0].path;
         resultObj.mode = 'CLI';
     }
     return resultObj;
@@ -198,10 +198,22 @@ export const processArgsAndExecuteMode = async () => {
                 resultObj.errors = resultObj.errors.filter(error => error !== 'missing source paths');
             }
         }
+        if (resultObj.errors.includes('invalid source paths')) {
+            resultObj.sourcePaths = await promptForSourcePaths(resultObj.sourcePaths);
+            if (resultObj.sourcePaths.filter(path => !checkIfPathIsValid(path, true)).length === 0) {
+                resultObj.errors = resultObj.errors.filter(error => error !== 'invalid source paths');
+            }
+        }
         if (resultObj.targetPath === '') {
             resultObj.targetPath = await promptForTargetPath();
             if (resultObj.targetPath) {
                 resultObj.errors = resultObj.errors.filter(error => error !== 'missing target path');
+            }
+        }
+        if (resultObj.errors.includes('invalid target path')) {
+            resultObj.targetPath = await promptForTargetPath();
+            if (checkIfPathIsValid(resultObj.targetPath, false)) {
+                resultObj.errors = resultObj.errors.filter(error => error !== 'invalid target path');
             }
         }
         stdout.write('Thanks for your input. Exiting CLI Mode. Starting indexing process now.\n');
