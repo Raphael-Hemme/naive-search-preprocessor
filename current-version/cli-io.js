@@ -155,15 +155,15 @@ const promptForSourcePaths = async (storedSourcePaths = []) => {
     }
 };
 const repromptForInvalidSourcePaths = async (validSourcePaths, invalidSourcePaths) => {
-    stdout.write('You specified invalid source paths. \n');
+    stdout.write(`You specified ${invalidSourcePaths.length} invalid source paths. \n`);
     for (const path of invalidSourcePaths) {
         const outputStr = '   ' + path + '\n';
-        stdout.write(generateTextRed(outputStr));
+        stdout.write(colorizeText(outputStr, 'red'));
     }
     stdout.write('The following valid source paths are stored. Would you like to correct one of the invalid paths\n');
     for (const path of validSourcePaths) {
         const outputStr = '   ' + path + '\n';
-        stdout.write(generateTextGreen(outputStr));
+        stdout.write(colorizeText(outputStr, 'green'));
     }
     return await promptForSourcePaths(validSourcePaths);
 };
@@ -176,11 +176,11 @@ const promptForTargetPath = async () => {
     const answer = await new Promise(resolve => rl.question('', resolve));
     rl.close();
     if (answer === '') {
-        stdout.write('You did not specify a target path. \n');
+        stdout.write('\nYou did not specify a target path. \n');
         return await promptForTargetPath();
     }
     else if (!checkIfPathIsValid(answer, false)) {
-        stdout.write('You specified an invalid target path. \n');
+        stdout.write('\nYou specified an invalid target path. \n');
         return await promptForTargetPath();
     }
     else {
@@ -280,9 +280,19 @@ export const printResultOfWritingFile = (targetPath, err) => {
         stdout.write('There has been an error while writing the index to the file: \n' + err + '\n');
     }
     else {
-        stdout.write(`Content has been written to the target file: ${targetPath}\n`);
+        stdout.write(colorizeText('SUCCESS!', 'green') + '\n');
+        stdout.write('Content has been written to the target file: ' + colorizeText(targetPath, 'green') + '\n\n');
     }
 };
 // -------------- CLI COLORS --------------
-export const generateTextRed = (text) => `\x1b[31m${text}\x1b[0m`;
-export const generateTextGreen = (text) => `\x1b[32m${text}\x1b[0m`;
+export const colorizeText = (text, color) => {
+    switch (color) {
+        case 'red':
+            return `\x1b[31m${text}\x1b[0m`;
+            ;
+        case 'green':
+            return `\x1b[32m${text}\x1b[0m`;
+        default:
+            return text;
+    }
+};
