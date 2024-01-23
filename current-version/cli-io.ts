@@ -237,6 +237,44 @@ const promptForTargetPath = async (): Promise<string> => {
   }
 }
 
+const executeCLIMode = async (inputResultObj: UserInputResultObj): Promise<UserInputResultObj> => {
+  const resultObj = {...inputResultObj};
+
+  if (resultObj.sourcePaths.length < 1) {
+    resultObj.sourcePaths = await promptForSourcePaths();
+    if (resultObj.sourcePaths) {
+      resultObj.errors = resultObj.errors.filter(error => error !== 'missing source paths');
+    }
+  }
+
+  if (resultObj.errors.includes('invalid source paths')) {
+    resultObj.sourcePaths = await promptForSourcePaths(resultObj.sourcePaths);
+    if (resultObj.sourcePaths.filter(path => !checkIfPathIsValid(path, true)).length === 0) {
+      resultObj.errors = resultObj.errors.filter(error => error !== 'invalid source paths');
+    }
+  }
+
+  if (resultObj.targetPath === '') {
+    resultObj.targetPath = await promptForTargetPath();
+    if (resultObj.targetPath) {
+      resultObj.errors = resultObj.errors.filter(error => error !== 'missing target path');
+    }
+  }
+
+  if (resultObj.errors.includes('invalid target path')) {
+    resultObj.targetPath = await promptForTargetPath();
+    if (checkIfPathIsValid(resultObj.targetPath, false)) {
+      resultObj.errors = resultObj.errors.filter(error => error !== 'invalid target path');
+    }
+  }
+
+  stdout.write('Thanks for your input. Exiting CLI Mode. Starting indexing process now.\n');
+  resultObj.mode = 'AUTO';
+
+  return resultObj;
+};
+
+
 export const processArgsAndExecuteMode = async (): Promise<UserInputResultObj> => {
 
   const args = getRelevantScriptArgs();
@@ -244,37 +282,12 @@ export const processArgsAndExecuteMode = async (): Promise<UserInputResultObj> =
   const resultObj: UserInputResultObj = extractSourceAndTargetPathsFromArgs(args, mode);
 
   if (resultObj.mode === 'CLI') {
-    
-    if (resultObj.sourcePaths.length < 1) {
-      resultObj.sourcePaths = await promptForSourcePaths();
-      if (resultObj.sourcePaths) {
-        resultObj.errors = resultObj.errors.filter(error => error !== 'missing source paths');
-      }
-    }
+    const cliModeResultObj = await executeCLIMode(resultObj);
 
-    if (resultObj.errors.includes('invalid source paths')) {
-      resultObj.sourcePaths = await promptForSourcePaths(resultObj.sourcePaths);
-      if (resultObj.sourcePaths.filter(path => !checkIfPathIsValid(path, true)).length === 0) {
-        resultObj.errors = resultObj.errors.filter(error => error !== 'invalid source paths');
-      }
-    }
-
-    if (resultObj.targetPath === '') {
-      resultObj.targetPath = await promptForTargetPath();
-      if (resultObj.targetPath) {
-        resultObj.errors = resultObj.errors.filter(error => error !== 'missing target path');
-      }
-    }
-
-    if (resultObj.errors.includes('invalid target path')) {
-      resultObj.targetPath = await promptForTargetPath();
-      if (checkIfPathIsValid(resultObj.targetPath, false)) {
-        resultObj.errors = resultObj.errors.filter(error => error !== 'invalid target path');
-      }
-    }
-
-    stdout.write('Thanks for your input. Exiting CLI Mode. Starting indexing process now.\n');
-    resultObj.mode = 'AUTO';
+    resultObj.sourcePaths = cliModeResultObj.sourcePaths;
+    resultObj.targetPath = cliModeResultObj.targetPath;
+    resultObj.errors = cliModeResultObj.errors;
+    resultObj.mode = cliModeResultObj.mode;
 
   } else if (resultObj.mode === 'AUTO') {
     stdout.write('Entering AUTO Mode. Starting indexing process now.\n');
