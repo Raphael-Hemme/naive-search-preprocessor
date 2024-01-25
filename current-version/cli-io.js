@@ -53,8 +53,8 @@ const extractSourceAndTargetPathsFromArgs = (allArgs, mode) => {
     let sourcePathsArr = extractAndCheckSourceOrTargetPathsFromArgs(allArgs, 'source', 'target');
     let invalidSourcePaths = sourcePathsArr.filter(pathObj => !pathObj.isValid);
     let targetPathsArr = extractAndCheckSourceOrTargetPathsFromArgs(allArgs, 'target', 'source');
-    console.log('------sourcePathsArr: ', sourcePathsArr);
-    console.log('------targetPathsArr: ', targetPathsArr);
+    // console.log('------sourcePathsArr: ', sourcePathsArr);
+    // console.log('------targetPathsArr: ', targetPathsArr);
     if (sourcePathsArr.length === 0) {
         resultObj.errors.push('missing source paths');
     }
@@ -68,18 +68,17 @@ const extractSourceAndTargetPathsFromArgs = (allArgs, mode) => {
         resultObj.errors.push('invalid target path');
     }
     if (resultObj.errors.length === 0) {
-        console.log('xxxxxx  entering AUTO mode  xxxxxx');
+        // console.log('xxxxxx  entering AUTO mode  xxxxxx');
         resultObj.sourcePaths = sourcePathsArr.map(pathObj => pathObj.path);
         resultObj.targetPath = targetPathsArr[0].path;
         resultObj.mode = 'AUTO';
     }
     else {
-        console.log('xxxxxx  entering CLI mode  xxxxxx');
+        // console.log('xxxxxx  entering CLI mode  xxxxxx');
         resultObj.sourcePaths = sourcePathsArr.map(pathObj => pathObj.path);
         resultObj.targetPath = targetPathsArr[0].path;
         resultObj.mode = 'CLI';
     }
-    console.log('------resultObj: ', resultObj);
     return resultObj;
 };
 const extractAndCheckSourceOrTargetPathsFromArgs = (allArgs, flagA, flagB) => {
@@ -146,17 +145,17 @@ const promptForSourcePaths = async (storedSourcePaths = []) => {
         sourcePaths.push(answer);
     }
     const invalidSourcePaths = sourcePaths.filter(path => !checkIfPathIsValid(path, true));
+    const invalidSourcePathsExcludingEmptyStrings = invalidSourcePaths.filter(path => path !== '');
     const validSourcePaths = sourcePaths.filter(path => checkIfPathIsValid(path, true));
     if (sourcePaths.length < 1) {
         stdout.write('You did not specify any source paths. \n');
         return await promptForSourcePaths();
     }
-    else if (invalidSourcePaths.length > 0) {
-        return await repromptForInvalidSourcePaths(validSourcePaths, invalidSourcePaths);
+    else if (invalidSourcePathsExcludingEmptyStrings.length > 0) {
+        return await repromptForInvalidSourcePaths(validSourcePaths, invalidSourcePathsExcludingEmptyStrings);
     }
     else {
-        console.log('---------> sourcePaths: ', sourcePaths);
-        return sourcePaths;
+        return sourcePaths.filter(path => path !== '');
     }
 };
 const repromptForInvalidSourcePaths = async (validSourcePaths, invalidSourcePaths) => {
@@ -206,18 +205,20 @@ const executeCLIMode = async (inputResultObj) => {
             resultObj.errors = resultObj.errors.filter(error => error !== 'invalid source paths');
         }
     }
-    if (resultObj.targetPath === '') {
+    if (resultObj.targetPath === '' || resultObj.errors.includes('invalid target path')) {
         resultObj.targetPath = await promptForTargetPath();
-        if (resultObj.targetPath) {
-            resultObj.errors = resultObj.errors.filter(error => error !== 'missing target path');
+        if (resultObj.targetPath && checkIfPathIsValid(resultObj.targetPath, false)) {
+            resultObj.errors = resultObj.errors.filter(errMsg => {
+                return errMsg !== 'missing target path' && errMsg !== 'invalid target path';
+            });
         }
     }
-    if (resultObj.errors.includes('invalid target path')) {
+    /*   if (resultObj.errors.includes('invalid target path')) {
         resultObj.targetPath = await promptForTargetPath();
         if (checkIfPathIsValid(resultObj.targetPath, false)) {
-            resultObj.errors = resultObj.errors.filter(error => error !== 'invalid target path');
+          resultObj.errors = resultObj.errors.filter(error => error !== 'invalid target path');
         }
-    }
+      } */
     stdout.write('Thanks for your input. Exiting CLI Mode. Starting indexing process now.\n');
     resultObj.mode = 'AUTO';
     return resultObj;
@@ -226,34 +227,19 @@ export const processArgsAndExecuteMode = async () => {
     const args = getRelevantScriptArgs();
     const mode = selectMode(args);
     const resultObj = extractSourceAndTargetPathsFromArgs(args, mode);
-    /*   if (resultObj.mode === 'CLI') {
-        const cliModeResultObj = await executeCLIMode(resultObj);
-    
-        resultObj.sourcePaths = cliModeResultObj.sourcePaths;
-        resultObj.targetPath = cliModeResultObj.targetPath;
-        resultObj.errors = cliModeResultObj.errors;
-        resultObj.mode = cliModeResultObj.mode;
-    
-      } else if (resultObj.mode === 'AUTO') {
-        stdout.write('Entering AUTO Mode. Starting indexing process now.\n');
-      } else if (resultObj.mode === 'HELP') {
-        stdout.write('Entering HELP Mode.\n');
-      } else {
-        stdout.write('Entering ERROR Mode.\n');
-        resultObj.errors.push('Something went wrong. Please check your input and try again.\n');
-      } */
     switch (resultObj.mode) {
         case 'CLI':
+            stdout.write('--> Entering CLI Mode.\n');
             return await executeCLIMode(resultObj);
         case 'AUTO':
-            stdout.write('Entering AUTO Mode. Starting indexing process now.\n');
+            stdout.write('--> Entering AUTO Mode. Starting indexing process now.\n');
             return resultObj;
         case 'HELP':
-            stdout.write('Entering HELP Mode.\n');
+            stdout.write('--> Entering HELP Mode.\n');
             return resultObj;
         case 'ERROR': // fallthrough
         default:
-            stdout.write('Entering ERROR Mode.\n');
+            stdout.write('--> Entering ERROR Mode.\n');
             resultObj.errors.unshift('Something went wrong. Please check your input and try again.\n');
             return resultObj;
     }
