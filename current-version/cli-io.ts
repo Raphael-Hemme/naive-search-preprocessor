@@ -95,8 +95,7 @@ const extractSourceAndTargetPathsFromArgs = (
     resultObj.errors.push('invalid target path');
   }
 
-  console.log('------resultObj: ', resultObj);
-
+  
   if (resultObj.errors.length === 0) {
     console.log('xxxxxx  entering AUTO mode  xxxxxx');
     resultObj.sourcePaths = sourcePathsArr.map(pathObj => pathObj.path);
@@ -108,7 +107,8 @@ const extractSourceAndTargetPathsFromArgs = (
     resultObj.targetPath = targetPathsArr[0].path;
     resultObj.mode = 'CLI';
   }
-
+  
+  console.log('------resultObj: ', resultObj);
   return resultObj;
 }
 
@@ -119,8 +119,8 @@ const extractAndCheckSourceOrTargetPathsFromArgs = (
 ): {path: string, isValid: boolean}[] => {
 
   const flagToRegExMap = {
-    source: /(--source|-s)/i,
-    target: /(--target|-t)/i
+    source: /^(--source|-s)$/i,
+    target: /^(--target|-t)$/i
   }
 
   const startIndicatorForA = allArgs.findIndex(arg => arg.match(flagToRegExMap[flagA]));
@@ -151,10 +151,16 @@ const extractAndCheckSourceOrTargetPathsFromArgs = (
 }
 
 const checkIfPathIsValid = (path: string, isSourceFlag: boolean): boolean => {
+  // early return if path is empty
+  if (path === '') {
+    return false;
+  }
+
+  // if source path is checked, check if the directory exists.
   if (isSourceFlag) {
     return existsSync(path);
   } else {
-    // if target paths array is returned, check if the directory exists- not the target file
+    // if target path is checked, check if the directory exists - not the target file.
     let dirPath = path
       .split('/')
       .slice(0, -1)
@@ -281,7 +287,7 @@ export const processArgsAndExecuteMode = async (): Promise<UserInputResultObj> =
   const mode = selectMode(args);
   const resultObj: UserInputResultObj = extractSourceAndTargetPathsFromArgs(args, mode);
 
-  if (resultObj.mode === 'CLI') {
+/*   if (resultObj.mode === 'CLI') {
     const cliModeResultObj = await executeCLIMode(resultObj);
 
     resultObj.sourcePaths = cliModeResultObj.sourcePaths;
@@ -296,9 +302,23 @@ export const processArgsAndExecuteMode = async (): Promise<UserInputResultObj> =
   } else {
     stdout.write('Entering ERROR Mode.\n');
     resultObj.errors.push('Something went wrong. Please check your input and try again.\n');
-  }
+  } */
 
-  return resultObj;
+  switch (resultObj.mode) {
+    case 'CLI':
+      return await executeCLIMode(resultObj);
+    case 'AUTO':
+      stdout.write('Entering AUTO Mode. Starting indexing process now.\n');
+      return resultObj;
+    case 'HELP':
+      stdout.write('Entering HELP Mode.\n');
+      return resultObj;
+    case 'ERROR': // fallthrough
+    default:
+      stdout.write('Entering ERROR Mode.\n');
+      resultObj.errors.unshift('Something went wrong. Please check your input and try again.\n');
+      return resultObj;
+  }
 }
 
 // ----------------- CLI-OUPUT -----------------

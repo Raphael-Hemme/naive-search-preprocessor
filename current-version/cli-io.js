@@ -67,7 +67,6 @@ const extractSourceAndTargetPathsFromArgs = (allArgs, mode) => {
     if (targetPathsArr.length > 0 && !targetPathsArr[0].isValid) {
         resultObj.errors.push('invalid target path');
     }
-    console.log('------resultObj: ', resultObj);
     if (resultObj.errors.length === 0) {
         console.log('xxxxxx  entering AUTO mode  xxxxxx');
         resultObj.sourcePaths = sourcePathsArr.map(pathObj => pathObj.path);
@@ -80,12 +79,13 @@ const extractSourceAndTargetPathsFromArgs = (allArgs, mode) => {
         resultObj.targetPath = targetPathsArr[0].path;
         resultObj.mode = 'CLI';
     }
+    console.log('------resultObj: ', resultObj);
     return resultObj;
 };
 const extractAndCheckSourceOrTargetPathsFromArgs = (allArgs, flagA, flagB) => {
     const flagToRegExMap = {
-        source: /(--source|-s)/i,
-        target: /(--target|-t)/i
+        source: /^(--source|-s)$/i,
+        target: /^(--target|-t)$/i
     };
     const startIndicatorForA = allArgs.findIndex(arg => arg.match(flagToRegExMap[flagA]));
     const startIndicatorForB = allArgs.findIndex(arg => arg.match(flagToRegExMap[flagB]));
@@ -110,11 +110,16 @@ const extractAndCheckSourceOrTargetPathsFromArgs = (allArgs, flagA, flagB) => {
     });
 };
 const checkIfPathIsValid = (path, isSourceFlag) => {
+    // early return if path is empty
+    if (path === '') {
+        return false;
+    }
+    // if source path is checked, check if the directory exists.
     if (isSourceFlag) {
         return existsSync(path);
     }
     else {
-        // if target paths array is returned, check if the directory exists- not the target file
+        // if target path is checked, check if the directory exists - not the target file.
         let dirPath = path
             .split('/')
             .slice(0, -1)
@@ -187,49 +192,71 @@ const promptForTargetPath = async () => {
         return answer;
     }
 };
+const executeCLIMode = async (inputResultObj) => {
+    const resultObj = { ...inputResultObj };
+    if (resultObj.sourcePaths.length < 1) {
+        resultObj.sourcePaths = await promptForSourcePaths();
+        if (resultObj.sourcePaths) {
+            resultObj.errors = resultObj.errors.filter(error => error !== 'missing source paths');
+        }
+    }
+    if (resultObj.errors.includes('invalid source paths')) {
+        resultObj.sourcePaths = await promptForSourcePaths(resultObj.sourcePaths);
+        if (resultObj.sourcePaths.filter(path => !checkIfPathIsValid(path, true)).length === 0) {
+            resultObj.errors = resultObj.errors.filter(error => error !== 'invalid source paths');
+        }
+    }
+    if (resultObj.targetPath === '') {
+        resultObj.targetPath = await promptForTargetPath();
+        if (resultObj.targetPath) {
+            resultObj.errors = resultObj.errors.filter(error => error !== 'missing target path');
+        }
+    }
+    if (resultObj.errors.includes('invalid target path')) {
+        resultObj.targetPath = await promptForTargetPath();
+        if (checkIfPathIsValid(resultObj.targetPath, false)) {
+            resultObj.errors = resultObj.errors.filter(error => error !== 'invalid target path');
+        }
+    }
+    stdout.write('Thanks for your input. Exiting CLI Mode. Starting indexing process now.\n');
+    resultObj.mode = 'AUTO';
+    return resultObj;
+};
 export const processArgsAndExecuteMode = async () => {
     const args = getRelevantScriptArgs();
     const mode = selectMode(args);
     const resultObj = extractSourceAndTargetPathsFromArgs(args, mode);
-    if (resultObj.mode === 'CLI') {
-        if (resultObj.sourcePaths.length < 1) {
-            resultObj.sourcePaths = await promptForSourcePaths();
-            if (resultObj.sourcePaths) {
-                resultObj.errors = resultObj.errors.filter(error => error !== 'missing source paths');
-            }
-        }
-        if (resultObj.errors.includes('invalid source paths')) {
-            resultObj.sourcePaths = await promptForSourcePaths(resultObj.sourcePaths);
-            if (resultObj.sourcePaths.filter(path => !checkIfPathIsValid(path, true)).length === 0) {
-                resultObj.errors = resultObj.errors.filter(error => error !== 'invalid source paths');
-            }
-        }
-        if (resultObj.targetPath === '') {
-            resultObj.targetPath = await promptForTargetPath();
-            if (resultObj.targetPath) {
-                resultObj.errors = resultObj.errors.filter(error => error !== 'missing target path');
-            }
-        }
-        if (resultObj.errors.includes('invalid target path')) {
-            resultObj.targetPath = await promptForTargetPath();
-            if (checkIfPathIsValid(resultObj.targetPath, false)) {
-                resultObj.errors = resultObj.errors.filter(error => error !== 'invalid target path');
-            }
-        }
-        stdout.write('Thanks for your input. Exiting CLI Mode. Starting indexing process now.\n');
-        resultObj.mode = 'AUTO';
-    }
-    else if (resultObj.mode === 'AUTO') {
+    /*   if (resultObj.mode === 'CLI') {
+        const cliModeResultObj = await executeCLIMode(resultObj);
+    
+        resultObj.sourcePaths = cliModeResultObj.sourcePaths;
+        resultObj.targetPath = cliModeResultObj.targetPath;
+        resultObj.errors = cliModeResultObj.errors;
+        resultObj.mode = cliModeResultObj.mode;
+    
+      } else if (resultObj.mode === 'AUTO') {
         stdout.write('Entering AUTO Mode. Starting indexing process now.\n');
-    }
-    else if (resultObj.mode === 'HELP') {
+      } else if (resultObj.mode === 'HELP') {
         stdout.write('Entering HELP Mode.\n');
-    }
-    else {
+      } else {
         stdout.write('Entering ERROR Mode.\n');
         resultObj.errors.push('Something went wrong. Please check your input and try again.\n');
+      } */
+    switch (resultObj.mode) {
+        case 'CLI':
+            return await executeCLIMode(resultObj);
+        case 'AUTO':
+            stdout.write('Entering AUTO Mode. Starting indexing process now.\n');
+            return resultObj;
+        case 'HELP':
+            stdout.write('Entering HELP Mode.\n');
+            return resultObj;
+        case 'ERROR': // fallthrough
+        default:
+            stdout.write('Entering ERROR Mode.\n');
+            resultObj.errors.unshift('Something went wrong. Please check your input and try again.\n');
+            return resultObj;
     }
-    return resultObj;
 };
 // ----------------- CLI-OUPUT -----------------
 export const printFrontMatter = () => {
