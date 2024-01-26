@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, writeFile } from 'fs';
+import { existsSync, readFileSync, readdirSync, writeFile } from 'fs';
 import { printResultOfWritingFile } from './cli-io.js';
 /**
  * Generates an array of paths to all the files in each of the directories
@@ -9,7 +9,6 @@ import { printResultOfWritingFile } from './cli-io.js';
 export const generateFilePathArr = (dirArr) => {
     const fileNameArr = [];
     for (const dir of dirArr) {
-        // todo: check if dir is a directory --- not here bur in cli-io.ts
         const filesOfDirArrEntryArr = readdirSync(dir);
         for (const fileName of filesOfDirArrEntryArr) {
             fileNameArr.push([dir, fileName]);
@@ -45,4 +44,25 @@ export const writeSearchIndexObjToJsonFile = (searchIndexArr, trgtP) => {
         .concat('.json'); // add .json file extension
     const jsonObj = JSON.stringify(searchIndexArr);
     writeFile(cleanedTrgtP, jsonObj, 'utf8', (err) => printResultOfWritingFile(cleanedTrgtP, err));
+};
+export const checkIfPathIsValid = (path, isSourceFlag) => {
+    // early return if path is empty
+    if (path === '') {
+        return false;
+    }
+    // if source path is checked, check if the directory exists.
+    if (isSourceFlag) {
+        return existsSync(path);
+    }
+    else {
+        // if target path is checked, check if the directory exists - not the target file.
+        let dirPath = path
+            .split('/')
+            .slice(0, -1)
+            .join('/');
+        dirPath = dirPath
+            ? dirPath
+            : './';
+        return existsSync(dirPath);
+    }
 };

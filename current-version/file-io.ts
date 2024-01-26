@@ -1,5 +1,5 @@
 import {
-    existsSync,
+  existsSync,
     readFileSync,
     readdirSync,
     writeFile 
@@ -16,9 +16,7 @@ import { FileContentObj, SearchIndexObj } from './data-processing.js';
  */
 export const generateFilePathArr = (dirArr: string[]): string[] => {
     const fileNameArr: string[][] = [];
-    for (const dir of dirArr) {
-      // todo: check if dir is a directory --- not here bur in cli-io.ts
-    
+    for (const dir of dirArr) {    
       const filesOfDirArrEntryArr = readdirSync(dir);
       for (const fileName of filesOfDirArrEntryArr) {
         fileNameArr.push([dir, fileName]);
@@ -58,3 +56,27 @@ export const writeSearchIndexObjToJsonFile = (searchIndexArr: SearchIndexObj[], 
     const jsonObj = JSON.stringify(searchIndexArr);
     writeFile(cleanedTrgtP, jsonObj, 'utf8', (err: Error | null): void => printResultOfWritingFile(cleanedTrgtP, err));
 };
+
+export const checkIfPathIsValid = (path: string, isSourceFlag: boolean): boolean => {
+  // early return if path is empty
+  if (path === '') {
+    return false;
+  }
+
+  // if source path is checked, check if the directory exists.
+  if (isSourceFlag) {
+    return existsSync(path);
+  } else {
+    // if target path is checked, check if the directory exists - not the target file.
+    let dirPath = path
+      .split('/')
+      .slice(0, -1)
+      .join('/');
+
+    dirPath = dirPath 
+      ? dirPath 
+      : './';
+
+    return existsSync(dirPath)
+  }
+}

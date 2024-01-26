@@ -1,6 +1,6 @@
-import { existsSync } from 'fs';
 import { argv, stdout, stdin } from 'process';
 import readline from 'readline';
+import { checkIfPathIsValid } from './file-io.js';
 const flagToRegExMap = {
     source: /^(--source|-s)$/i,
     target: /^(--target|-t)$/i,
@@ -109,27 +109,6 @@ const extractAndCheckSourceOrTargetPathsFromArgs = (allArgs, flagA, flagB) => {
         };
     });
 };
-const checkIfPathIsValid = (path, isSourceFlag) => {
-    // early return if path is empty
-    if (path === '') {
-        return false;
-    }
-    // if source path is checked, check if the directory exists.
-    if (isSourceFlag) {
-        return existsSync(path);
-    }
-    else {
-        // if target path is checked, check if the directory exists - not the target file.
-        let dirPath = path
-            .split('/')
-            .slice(0, -1)
-            .join('/');
-        dirPath = dirPath
-            ? dirPath
-            : './';
-        return existsSync(dirPath);
-    }
-};
 const promptForSourcePaths = async (storedSourcePaths = []) => {
     const sourcePaths = storedSourcePaths.slice();
     const rl = readline.createInterface({
@@ -172,21 +151,30 @@ const repromptForInvalidSourcePaths = async (validSourcePaths, invalidSourcePath
     }
     return await promptForSourcePaths(validSourcePaths);
 };
-const promptForTargetPath = async () => {
+const promptForTargetPath = async (invalidTargetPath = null) => {
+    let prompt;
+    switch (invalidTargetPath) {
+        case null:
+            prompt = '\nPlease enter the path to the target file. \n';
+            break;
+        case '':
+            prompt = '\nYou did not specify a target path. \n';
+            break;
+        default:
+            prompt = '\nYou specified an invalid target path. \n'
+                + `${colorizeText(invalidTargetPath, 'red')} does not exist. \n`
+                + 'Please enter a valid target path. \n';
+            break;
+    }
     const rl = readline.createInterface({
         input: stdin,
         output: stdout
     });
-    stdout.write('\nPlease enter the path to the target file. \n');
+    stdout.write(prompt);
     const answer = await new Promise(resolve => rl.question('', resolve));
     rl.close();
-    if (answer === '') {
-        stdout.write('\nYou did not specify a target path. \n');
-        return await promptForTargetPath();
-    }
-    else if (!checkIfPathIsValid(answer, false)) {
-        stdout.write('\nYou specified an invalid target path. \n');
-        return await promptForTargetPath();
+    if (answer === '' || !checkIfPathIsValid(answer, false)) {
+        return await promptForTargetPath(answer);
     }
     else {
         return answer;
@@ -208,7 +196,7 @@ const executeCLIMode = async (inputResultObj) => {
     }
     if (resultObj.errors.includes('missing target path') ||
         resultObj.errors.includes('invalid target path')) {
-        resultObj.targetPath = await promptForTargetPath();
+        resultObj.targetPath = await promptForTargetPath(resultObj.targetPath);
         if (resultObj.targetPath && checkIfPathIsValid(resultObj.targetPath, false)) {
             resultObj.errors = resultObj.errors.filter(errMsg => {
                 return errMsg !== 'missing target path' && errMsg !== 'invalid target path';
