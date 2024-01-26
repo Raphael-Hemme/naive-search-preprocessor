@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync, writeFile } from 'fs';
+import { existsSync, readFileSync, readdirSync, statSync, writeFile } from 'fs';
 import { printResultOfWritingFile } from './cli-io.js';
 /**
  * Generates an array of paths to all the files in each of the directories
@@ -46,13 +46,21 @@ export const writeSearchIndexObjToJsonFile = (searchIndexArr, trgtP) => {
     writeFile(cleanedTrgtP, jsonObj, 'utf8', (err) => printResultOfWritingFile(cleanedTrgtP, err));
 };
 export const checkIfPathIsValid = (path, isSourceFlag) => {
+    console.log('checking if path is valid: ', path, 'isSource', isSourceFlag);
     // early return if path is empty
     if (path === '') {
         return false;
     }
-    // if source path is checked, check if the directory exists.
+    // if source path is checked, check if the path exists and if it is a directory - not a file.
     if (isSourceFlag) {
-        return existsSync(path);
+        console.log('checking for source path: ', path);
+        if (!existsSync(path)) {
+            return false;
+        }
+        else {
+            console.log('path exists and path is a directory: ', statSync(path).isDirectory());
+            return statSync(path).isDirectory();
+        }
     }
     else {
         // if target path is checked, check if the directory exists - not the target file.

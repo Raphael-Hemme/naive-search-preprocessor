@@ -1,8 +1,9 @@
 import {
   existsSync,
-    readFileSync,
-    readdirSync,
-    writeFile 
+  readFileSync,
+  readdirSync,
+  statSync,
+  writeFile 
 } from 'fs';
 
 import { printResultOfWritingFile } from './cli-io.js';
@@ -58,16 +59,23 @@ export const writeSearchIndexObjToJsonFile = (searchIndexArr: SearchIndexObj[], 
 };
 
 export const checkIfPathIsValid = (path: string, isSourceFlag: boolean): boolean => {
+  console.log('checking if path is valid: ', path, 'isSource', isSourceFlag)
   // early return if path is empty
   if (path === '') {
     return false;
   }
 
-  // if source path is checked, check if the directory exists.
+  // if source path is checked, check if the path exists and if it is a directory - not a file.
   if (isSourceFlag) {
-    return existsSync(path);
+    console.log('checking for source path: ', path)
+    if (!existsSync(path)) {
+      return false;
+    } else {
+      console.log('path exists and path is a directory: ', statSync(path).isDirectory())
+      return statSync(path).isDirectory()
+    }
   } else {
-    // if target path is checked, check if the directory exists - not the target file.
+  // if target path is checked, check if the directory exists - not the target file.
     let dirPath = path
       .split('/')
       .slice(0, -1)

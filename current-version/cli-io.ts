@@ -13,7 +13,7 @@ export interface UserInputResultObj {
 }
 
 
-const flagToRegExMap = {
+const argumentFlagToRegExMap = {
   source: /^(--source|-s)$/i,
   target: /^(--target|-t)$/i,
   help: /^(--help|-h)$/i
@@ -45,11 +45,11 @@ const selectMode = (allArgs: string[] | null): Mode => {
 
   const allArgsStr = allArgs.join(' ');
   
-  if (flagToRegExMap.help.test(allArgsStr)) {
+  if (argumentFlagToRegExMap.help.test(allArgsStr)) {
     return 'HELP';
   }
 
-  if (flagToRegExMap.source.test(allArgsStr) && flagToRegExMap.target.test(allArgsStr)) {
+  if (argumentFlagToRegExMap.source.test(allArgsStr) && argumentFlagToRegExMap.target.test(allArgsStr)) {
     return 'AUTO';
   } else {
     return 'CLI';
@@ -125,8 +125,8 @@ const extractAndCheckSourceOrTargetPathsFromArgs = (
   flagB: 'source' | 'target'
 ): {path: string, isValid: boolean}[] => {
 
-  const startIndicatorForA = allArgs.findIndex(arg => arg.match(flagToRegExMap[flagA]));
-  const startIndicatorForB = allArgs.findIndex(arg => arg.match(flagToRegExMap[flagB]));
+  const startIndicatorForA = allArgs.findIndex(arg => arg.match(argumentFlagToRegExMap[flagA]));
+  const startIndicatorForB = allArgs.findIndex(arg => arg.match(argumentFlagToRegExMap[flagB]));
 
   const pathForAIsMissing = startIndicatorForA === -1;
   const pathForBIsMissing = startIndicatorForB === -1;
@@ -147,11 +147,10 @@ const extractAndCheckSourceOrTargetPathsFromArgs = (
   return pathsArrForA.map(path => {
     return {
       path: path,
-      isValid: checkIfPathIsValid(path, flagToRegExMap.source.test(flagA)),
+      isValid: checkIfPathIsValid(path, flagA === 'source'),
     }
   });
 }
-
 
 
 const promptForSourcePaths = async (storedSourcePaths: string[] = []): Promise<string[]> => {
@@ -161,7 +160,7 @@ const promptForSourcePaths = async (storedSourcePaths: string[] = []): Promise<s
     output: stdout
   });
 
-  stdout.write('Please enter the paths to the source files you want to index. Enter "done" when you are finished. \n');
+  stdout.write(getPromptTextForSourcePaths(storedSourcePaths));
   while (true) {
     const answer = await new Promise<string>(resolve => rl.question('', resolve));
     if (answer.toLowerCase() === 'done') {
@@ -188,6 +187,18 @@ const promptForSourcePaths = async (storedSourcePaths: string[] = []): Promise<s
   }
 }
 
+const getPromptTextForSourcePaths = (storedSourcePaths: string[]): string => {
+  let result = 'Please enter the paths to the source files you want to index. Enter "done" when you are finished. \n';
+  if (storedSourcePaths.length === 0) {
+    return result;
+  } else if (storedSourcePaths.length === 1 && storedSourcePaths[0] === '') {
+    result = 'You did not specify any source paths. \n' + result;
+    return result;
+  } else {
+    return '';
+  }
+};
+
 const repromptForInvalidSourcePaths = async (
   validSourcePaths: string[],
   invalidSourcePaths: string[]
@@ -206,20 +217,7 @@ const repromptForInvalidSourcePaths = async (
 }
 
 const promptForTargetPath = async (invalidTargetPath: string | null = null): Promise<string> => {
-  let prompt!: string;
-  switch (invalidTargetPath) {
-    case null:
-      prompt = '\nPlease enter the path to the target file. \n';
-      break;
-    case '':
-      prompt = '\nYou did not specify a target path. \n';
-      break;
-    default:
-      prompt = '\nYou specified an invalid target path. \n'
-        + `${colorizeText(invalidTargetPath, 'red')} does not exist. \n` 
-        + 'Please enter a valid target path. \n';
-      break;
-  }
+  let prompt = getPromptTextForTargetPath(invalidTargetPath);
 
   const rl = readline.createInterface({
     input: stdin,
@@ -236,6 +234,21 @@ const promptForTargetPath = async (invalidTargetPath: string | null = null): Pro
     return answer;
   }
 }
+
+const getPromptTextForTargetPath = (invalidTargetPath: string | null): string => {
+  switch (invalidTargetPath) {
+    case null:
+      return '\nPlease enter the path to the target file. \n';
+    case '':
+      return '\nYou did not specify a target path. \n';
+    default:
+      return '\nYou specified an invalid target path. \n'
+        + `${colorizeText(invalidTargetPath, 'red')} does not exist. \n` 
+        + 'Please enter a valid target path. \n';
+  }
+};
+
+
 
 const executeCLIMode = async (inputResultObj: UserInputResultObj): Promise<UserInputResultObj> => {
   const resultObj = {...inputResultObj};
