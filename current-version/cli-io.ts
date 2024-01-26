@@ -1,6 +1,4 @@
-import { dir } from 'console';
 import { existsSync } from 'fs';
-import path from 'path';
 import { argv, stdout, stdin } from 'process';
 import readline from 'readline';
 
@@ -12,6 +10,13 @@ export interface UserInputResultObj {
   targetPath: string;
   errors: string[];
   mode: Mode;
+}
+
+
+const flagToRegExMap = {
+  source: /^(--source|-s)$/i,
+  target: /^(--target|-t)$/i,
+  help: /^(--help|-h)$/i
 }
 
 // ----------------- CLI-INPUT -----------------
@@ -36,19 +41,19 @@ const getRelevantScriptArgs = (): string[] | null => {
 const selectMode = (allArgs: string[] | null): Mode => {
   if (!allArgs) {
     return 'CLI';
-  } 
+  }
+
+  const allArgsStr = allArgs.join(' ');
   
-  if (allArgs.includes('--help')) {
+  if (flagToRegExMap.help.test(allArgsStr)) {
     return 'HELP';
   }
 
-  if (allArgs.includes('--source') && allArgs.includes('--target')) {
+  if (flagToRegExMap.source.test(allArgsStr) && flagToRegExMap.target.test(allArgsStr)) {
     return 'AUTO';
-  } else if (allArgs.includes('--source') || allArgs.includes('--target')) {
-    return 'CLI';
   } else {
-    return 'ERROR';
-  };
+    return 'CLI';
+  } 
 }
 
 const extractSourceAndTargetPathsFromArgs = (
@@ -64,6 +69,9 @@ const extractSourceAndTargetPathsFromArgs = (
   }
 
   if (!allArgs) {
+    resultObj.errors.push('missing source paths');
+    resultObj.errors.push('missing target path');
+    resultObj.mode = 'CLI';
     return resultObj;
   }
 
@@ -76,8 +84,8 @@ const extractSourceAndTargetPathsFromArgs = (
   let invalidSourcePaths = sourcePathsArr.filter(pathObj => !pathObj.isValid);
   let targetPathsArr = extractAndCheckSourceOrTargetPathsFromArgs(allArgs, 'target', 'source');
 
-  // console.log('------sourcePathsArr: ', sourcePathsArr);
-  // console.log('------targetPathsArr: ', targetPathsArr);
+  console.log('------sourcePathsArr: ', sourcePathsArr);
+  console.log('------targetPathsArr: ', targetPathsArr);
 
   if (sourcePathsArr.length === 0) {
     resultObj.errors.push('missing source paths');
@@ -104,7 +112,7 @@ const extractSourceAndTargetPathsFromArgs = (
   } else {
     // console.log('xxxxxx  entering CLI mode  xxxxxx');
     resultObj.sourcePaths = sourcePathsArr.map(pathObj => pathObj.path);
-    resultObj.targetPath = targetPathsArr[0].path;
+    resultObj.targetPath = targetPathsArr[0]?.path ?? [];
     resultObj.mode = 'CLI';
   }
   
@@ -116,11 +124,6 @@ const extractAndCheckSourceOrTargetPathsFromArgs = (
   flagA: 'source' | 'target', 
   flagB: 'source' | 'target'
 ): {path: string, isValid: boolean}[] => {
-
-  const flagToRegExMap = {
-    source: /^(--source|-s)$/i,
-    target: /^(--target|-t)$/i
-  }
 
   const startIndicatorForA = allArgs.findIndex(arg => arg.match(flagToRegExMap[flagA]));
   const startIndicatorForB = allArgs.findIndex(arg => arg.match(flagToRegExMap[flagB]));
@@ -230,7 +233,7 @@ const promptForTargetPath = async (): Promise<string> => {
     output: stdout
   });
 
-  stdout.write('Please enter the path to the target file. \n');
+  stdout.write('\nPlease enter the path to the target file. \n');
   const answer = await new Promise<string>(resolve => rl.question('', resolve));
   rl.close();
 
@@ -263,7 +266,10 @@ const executeCLIMode = async (inputResultObj: UserInputResultObj): Promise<UserI
     }
   }
 
-  if (resultObj.targetPath === '' || resultObj.errors.includes('invalid target path')) {
+  if (
+    resultObj.errors.includes('missing target path') ||
+    resultObj.errors.includes('invalid target path')
+  ) {
     resultObj.targetPath = await promptForTargetPath();
 
     if (resultObj.targetPath && checkIfPathIsValid(resultObj.targetPath, false)) {
@@ -295,17 +301,17 @@ export const processArgsAndExecuteMode = async (): Promise<UserInputResultObj> =
 
   switch (resultObj.mode) {
     case 'CLI':
-      stdout.write('--> Entering CLI Mode.\n');
+      stdout.write('--> Entering CLI mode.\n\n');
       return await executeCLIMode(resultObj);
     case 'AUTO':
-      stdout.write('--> Entering AUTO Mode. Starting indexing process now.\n');
+      stdout.write('--> Entering AUTO mode. Starting indexing process now.\n\n');
       return resultObj;
     case 'HELP':
-      stdout.write('--> Entering HELP Mode.\n');
+      stdout.write('--> Entering HELP mode.\n\n');
       return resultObj;
     case 'ERROR': // fallthrough
     default:
-      stdout.write('--> Entering ERROR Mode.\n');
+      stdout.write('--> Entering ERROR mode.\n\n');
       resultObj.errors.unshift('Something went wrong. Please check your input and try again.\n');
       return resultObj;
   }

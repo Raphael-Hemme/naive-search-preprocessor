@@ -52,7 +52,7 @@ export const generateFileContentObjArr = (filePathArr: string[]): FileContentObj
  */
 export const writeSearchIndexObjToJsonFile = (searchIndexArr: SearchIndexObj[], trgtP: string) => {
     const cleanedTrgtP = trgtP
-      .replace(/\..*$/, '') // remove file extension if present
+      .replace(/\.(?!\/|\.)[^/]*$/, '') // remove file extension if present but don't remove relative paths like ./ or ../
       .concat('.json'); // add .json file extension
 
     const jsonObj = JSON.stringify(searchIndexArr);
