@@ -118,7 +118,7 @@ const promptForSourcePaths = async (storedSourcePaths = []) => {
     stdout.write(getPromptTextForSourcePaths(storedSourcePaths));
     while (true) {
         const answer = await new Promise(resolve => rl.question('', resolve));
-        if (answer.toLowerCase() === 'done') {
+        if (answer.toLowerCase() === '') {
             rl.close();
             break;
         }
@@ -127,7 +127,7 @@ const promptForSourcePaths = async (storedSourcePaths = []) => {
     const invalidSourcePaths = sourcePaths.filter(path => !checkIfPathIsValid(path, true));
     const invalidSourcePathsExcludingEmptyStrings = invalidSourcePaths.filter(path => path !== '');
     const validSourcePaths = sourcePaths.filter(path => checkIfPathIsValid(path, true));
-    if (sourcePaths.length < 1) {
+    if (sourcePaths.length === 0) {
         stdout.write('You did not specify any source paths. \n');
         return await promptForSourcePaths();
     }
@@ -139,16 +139,16 @@ const promptForSourcePaths = async (storedSourcePaths = []) => {
     }
 };
 const getPromptTextForSourcePaths = (storedSourcePaths) => {
-    let result = 'Please enter the paths to the source files you want to index. Enter "done" when you are finished. \n';
+    let basePrompt = 'Please enter the paths to the source files you want to index. Tap enter again on a new line to confirm your entry. \n';
     if (storedSourcePaths.length === 0) {
-        return result;
+        return basePrompt;
     }
     else if (storedSourcePaths.length === 1 && storedSourcePaths[0] === '') {
-        result = 'You did not specify any source paths. \n' + result;
-        return result;
+        basePrompt = 'You did not specify any source paths. \n' + basePrompt;
+        return basePrompt;
     }
     else {
-        return '';
+        return 'You specified invalid source paths. \n' + basePrompt;
     }
 };
 const repromptForInvalidSourcePaths = async (validSourcePaths, invalidSourcePaths) => {
@@ -215,12 +215,6 @@ const executeCLIMode = async (inputResultObj) => {
             });
         }
     }
-    /*   if (resultObj.errors.includes('invalid target path')) {
-        resultObj.targetPath = await promptForTargetPath();
-        if (checkIfPathIsValid(resultObj.targetPath, false)) {
-          resultObj.errors = resultObj.errors.filter(error => error !== 'invalid target path');
-        }
-      } */
     stdout.write('Thanks for your input. Exiting CLI Mode. Starting indexing process now.\n');
     resultObj.mode = 'AUTO';
     return resultObj;

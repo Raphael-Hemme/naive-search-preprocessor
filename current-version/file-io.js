@@ -46,19 +46,16 @@ export const writeSearchIndexObjToJsonFile = (searchIndexArr, trgtP) => {
     writeFile(cleanedTrgtP, jsonObj, 'utf8', (err) => printResultOfWritingFile(cleanedTrgtP, err));
 };
 export const checkIfPathIsValid = (path, isSourceFlag) => {
-    console.log('checking if path is valid: ', path, 'isSource', isSourceFlag);
     // early return if path is empty
     if (path === '') {
         return false;
     }
     // if source path is checked, check if the path exists and if it is a directory - not a file.
     if (isSourceFlag) {
-        console.log('checking for source path: ', path);
         if (!existsSync(path)) {
             return false;
         }
         else {
-            console.log('path exists and path is a directory: ', statSync(path).isDirectory());
             return statSync(path).isDirectory();
         }
     }

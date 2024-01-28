@@ -59,7 +59,6 @@ export const writeSearchIndexObjToJsonFile = (searchIndexArr: SearchIndexObj[], 
 };
 
 export const checkIfPathIsValid = (path: string, isSourceFlag: boolean): boolean => {
-  console.log('checking if path is valid: ', path, 'isSource', isSourceFlag)
   // early return if path is empty
   if (path === '') {
     return false;
@@ -67,11 +66,9 @@ export const checkIfPathIsValid = (path: string, isSourceFlag: boolean): boolean
 
   // if source path is checked, check if the path exists and if it is a directory - not a file.
   if (isSourceFlag) {
-    console.log('checking for source path: ', path)
     if (!existsSync(path)) {
       return false;
     } else {
-      console.log('path exists and path is a directory: ', statSync(path).isDirectory())
       return statSync(path).isDirectory()
     }
   } else {
