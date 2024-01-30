@@ -89,9 +89,6 @@ const extractSourceAndTargetPathsFromArgs = (
   let invalidSourcePaths = sourcePathsArr.filter(pathObj => !pathObj.isValid);
   let targetPathsArr = extractAndCheckSourceOrTargetPathsFromArgs(allArgs, 'target', 'source');
 
-  console.log('------sourcePathsArr: ', sourcePathsArr);
-  console.log('------targetPathsArr: ', targetPathsArr);
-
   if (sourcePathsArr.length === 0) {
     resultObj.errors.push('missing source paths');
   }
@@ -110,12 +107,10 @@ const extractSourceAndTargetPathsFromArgs = (
 
   
   if (resultObj.errors.length === 0) {
-    // console.log('xxxxxx  entering AUTO mode  xxxxxx');
     resultObj.sourcePaths = sourcePathsArr.map(pathObj => pathObj.path);
     resultObj.targetPath = targetPathsArr[0].path;
     resultObj.mode = 'AUTO';
   } else {
-    // console.log('xxxxxx  entering CLI mode  xxxxxx');
     resultObj.sourcePaths = sourcePathsArr.map(pathObj => pathObj.path);
     resultObj.targetPath = targetPathsArr[0]?.path ?? [];
     resultObj.mode = 'CLI';
@@ -157,69 +152,6 @@ const extractAndCheckSourceOrTargetPathsFromArgs = (
   });
 }
 
-const promptForSourcePaths = async (storedSourcePaths: string[] = []): Promise<string[]> => {
-  const sourcePaths = storedSourcePaths.slice();
-  const rl = readline.createInterface({
-    input: stdin,
-    output: stdout
-  });
-
-  stdout.write(getPromptTextForSourcePaths(storedSourcePaths));
-  while (true) {
-    const answer = await new Promise<string>(resolve => rl.question('', resolve));
-    if (answer.toLowerCase() === '') {
-      rl.close();
-      break;
-    }
-    sourcePaths.push(answer);
-  }
-
-  const invalidSourcePaths = sourcePaths.filter(path => !checkIfPathIsValid(path, true));
-  const invalidSourcePathsExcludingEmptyStrings = invalidSourcePaths.filter(path => path !== '');
-  const validSourcePaths = sourcePaths.filter(path => checkIfPathIsValid(path, true));
-
-  if (sourcePaths.length === 0) {
-    stdout.write('You did not specify any source paths. \n');
-    return await promptForSourcePaths();
-  } else if (invalidSourcePathsExcludingEmptyStrings.length > 0) {
-    return await repromptForInvalidSourcePaths(
-      validSourcePaths,
-      invalidSourcePathsExcludingEmptyStrings
-    );
-  } else {
-    return sourcePaths.filter(path => path !== '');
-  }
-}
-
-const getPromptTextForSourcePaths = (storedSourcePaths: string[]): string => {
-  let basePrompt = 'Please enter the paths to the source files you want to index. Tap enter again on a new line to confirm your entry. \n';
-  if (storedSourcePaths.length === 0) {
-    return basePrompt;
-  } else if (storedSourcePaths.length === 1 && storedSourcePaths[0] === '') {
-    basePrompt = 'You did not specify any source paths. \n' + basePrompt;
-    return basePrompt;
-  } else {
-    return 'You specified invalid source paths. \n' + basePrompt;
-  }
-};
-
-const repromptForInvalidSourcePaths = async (
-  validSourcePaths: string[],
-  invalidSourcePaths: string[]
-): Promise<string[]> => {
-  stdout.write(`You specified ${invalidSourcePaths.length} invalid source paths. \n`);
-  for (const path of invalidSourcePaths) {
-    const outputStr = '   ' + path + '\n'
-    stdout.write(colorizeText(outputStr, 'red'));
-  }
-  stdout.write('The following valid source paths are stored. Would you like to correct one of the invalid paths\n');
-  for (const path of validSourcePaths) {
-    const outputStr = '   ' + path + '\n'
-    stdout.write(colorizeText(outputStr, 'green'));
-  }
-  return await promptForSourcePaths(validSourcePaths);
-}
-
 const promptForPaths = async (isRegularPrompt: boolean = true): Promise<PathObj[]> => {
   if (isRegularPrompt) {
     stdout.write('\nPlease enter the paths to the source files you want to index.\n');
@@ -259,7 +191,7 @@ const validatePaths = (paths: PathObj[]): [PathObj[], PathObj[]] => {
   return [validPaths, invalidPaths];
 };
 
-const promptForSourcePathsNew = async (
+const promptForSourcePaths = async (
   storedSourcePathArr: {path: string, isValid: boolean}[] = [],
 ): Promise<PathObj[]> => {
   let paths = storedSourcePathArr.slice();
@@ -272,7 +204,7 @@ const promptForSourcePathsNew = async (
   if (invalidPaths.length > 0) {
     // Print invalid (and valid) paths and reprompt
     printInvalidAndValidSourcePathsAndPrompt(invalidPaths, validPaths);
-    return await promptForSourcePathsNew([...validPaths, ...await promptForPaths(false)]);
+    return await promptForSourcePaths([...validPaths, ...await promptForPaths(false)]);
   } else {
     printValidSourcePaths(validPaths);
     return validPaths;
@@ -301,13 +233,13 @@ const promptForTargetPath = async (invalidTargetPath: string | null = null): Pro
 const getPromptTextForTargetPath = (invalidTargetPath: string | null): string => {
   switch (invalidTargetPath) {
     case null:
-      return '\nPlease enter the path to the target file. \n';
+      return '\nPlease enter the path to the target file. \n\n';
     case '':
-      return '\nYou did not specify a target path. \n';
+      return '\nYou did not specify a target path. \n\n';
     default:
-      return '\nYou specified an invalid target path. \n'
-        + `${colorizeText(invalidTargetPath, 'red')} does not exist. \n` 
-        + 'Please enter a valid target path. \n';
+      return '\nYou specified an invalid target path. \n\n'
+        + `  ${colorizeText(invalidTargetPath, 'red')}\n\n` 
+        + 'Please enter a valid target path. \n\n';
   }
 };
 
@@ -317,7 +249,7 @@ const executeCLIMode = async (inputResultObj: UserInputResultObj): Promise<UserI
   const resultObj = {...inputResultObj};
 
   if (resultObj.sourcePaths.length < 1) {
-    resultObj.sourcePaths = (await promptForSourcePathsNew()).map(pathObj => pathObj.path);
+    resultObj.sourcePaths = (await promptForSourcePaths()).map(pathObj => pathObj.path);
     if (resultObj.sourcePaths.length > 0) {
       resultObj.errors = resultObj.errors.filter(error => error !== 'missing source paths');
     }
@@ -330,7 +262,7 @@ const executeCLIMode = async (inputResultObj: UserInputResultObj): Promise<UserI
         isValid: checkIfPathIsValid(path, true),
       }
     });
-    resultObj.sourcePaths = (await promptForSourcePathsNew(sourcePathObjArr)).map(pathObj => pathObj.path);
+    resultObj.sourcePaths = (await promptForSourcePaths(sourcePathObjArr)).map(pathObj => pathObj.path);
 
     if (resultObj.sourcePaths.filter(path => !checkIfPathIsValid(path, true)).length === 0) {
       resultObj.errors = resultObj.errors.filter(error => error !== 'invalid source paths');
@@ -350,7 +282,7 @@ const executeCLIMode = async (inputResultObj: UserInputResultObj): Promise<UserI
     }
   }
 
-  stdout.write('Thanks for your input. Exiting CLI Mode. Starting indexing process now.\n');
+  stdout.write('Thanks for your input. Exiting CLI Mode. Starting indexing process now.\n\n');
   resultObj.mode = 'AUTO';
 
   return resultObj;
@@ -365,21 +297,23 @@ export const processArgsAndExecuteMode = async (): Promise<UserInputResultObj> =
 
   switch (resultObj.mode) {
     case 'CLI':
-      stdout.write('--> Entering CLI mode.\n\n');
+      stdout.write('-- Entering CLI mode.\n\n');
       return await executeCLIMode(resultObj);
     case 'AUTO':
-      stdout.write('--> Entering AUTO mode. Starting indexing process now.\n\n');
+      stdout.write('-- Entering AUTO mode. Starting indexing process now.\n\n');
       return resultObj;
     case 'HELP':
-      stdout.write('--> Entering HELP mode.\n\n');
+      stdout.write('-- Entering HELP mode.\n\n');
       return resultObj;
     case 'ERROR': // fallthrough
     default:
-      stdout.write('--> Entering ERROR mode.\n\n');
+      stdout.write('-- Entering ERROR mode.\n\n');
       resultObj.errors.unshift('Something went wrong. Please check your input and try again.\n');
       return resultObj;
   }
 }
+
+
 
 // ----------------- CLI-OUPUT -----------------
 
@@ -471,6 +405,8 @@ const printValidSourcePaths = (validPaths: PathObj[]): void => {
     stdout.write(colorizeText(outputStr, 'green'));
   }
 }
+
+
 
 // -------------- CLI COLORS --------------
 
