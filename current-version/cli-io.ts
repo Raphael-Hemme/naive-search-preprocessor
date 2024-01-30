@@ -1,6 +1,7 @@
 import { argv, stdout, stdin } from 'process';
 import readline from 'readline';
 import { checkIfPathIsValid } from './file-io.js';
+import path from 'path';
 
 
 export type Mode = 'CLI' | 'AUTO' | 'HELP' | 'ERROR'; 
@@ -12,6 +13,10 @@ export interface UserInputResultObj {
   mode: Mode;
 }
 
+interface PathObj {
+  path: string;
+  isValid: boolean;
+}
 
 const argumentFlagToRegExMap = {
   source: /^(--source|-s)$/i,
@@ -215,6 +220,65 @@ const repromptForInvalidSourcePaths = async (
   return await promptForSourcePaths(validSourcePaths);
 }
 
+const promptForPaths = async (isRegularPrompt: boolean = true): Promise<PathObj[]> => {
+  if (isRegularPrompt) {
+    stdout.write('\nPlease enter the paths to the source files you want to index.\n');
+    stdout.write('Press enter again on a new line to confirm your entry. \n\n');
+  }
+  const rl = readline.createInterface({
+    input: stdin,
+    output: stdout
+  });
+
+  const paths = [];
+  while (true) {
+    const answer = await new Promise<string>(resolve => rl.question('', resolve));
+    if (answer.toLowerCase() === '') {
+      rl.close();
+      break;
+    }
+    paths.push({
+      path: answer,
+      isValid: false, // set to false for now and validate later
+    });
+  }
+  return paths;
+};
+
+const validatePaths = (paths: PathObj[]): [PathObj[], PathObj[]] => {
+  const validPaths = [];
+  const invalidPaths = [];
+  for (const pathObj of paths) {
+    pathObj.isValid = checkIfPathIsValid(pathObj.path, true);
+    if (pathObj.isValid) {
+      validPaths.push(pathObj);
+    } else {
+      invalidPaths.push(pathObj);
+    }
+  }
+  return [validPaths, invalidPaths];
+};
+
+const promptForSourcePathsNew = async (
+  storedSourcePathArr: {path: string, isValid: boolean}[] = [],
+): Promise<PathObj[]> => {
+  let paths = storedSourcePathArr.slice();
+  if (paths.length === 0) {
+    paths.push(...await promptForPaths());
+  }
+
+  const [validPaths, invalidPaths] = validatePaths(paths);
+
+  if (invalidPaths.length > 0) {
+    // Print invalid (and valid) paths and reprompt
+    printInvalidAndValidSourcePathsAndPrompt(invalidPaths, validPaths);
+    return await promptForSourcePathsNew([...validPaths, ...await promptForPaths(false)]);
+  } else {
+    printValidSourcePaths(validPaths);
+    return validPaths;
+  }
+};
+
 const promptForTargetPath = async (invalidTargetPath: string | null = null): Promise<string> => {
   let prompt = getPromptTextForTargetPath(invalidTargetPath);
 
@@ -253,14 +317,20 @@ const executeCLIMode = async (inputResultObj: UserInputResultObj): Promise<UserI
   const resultObj = {...inputResultObj};
 
   if (resultObj.sourcePaths.length < 1) {
-    resultObj.sourcePaths = await promptForSourcePaths();
-    if (resultObj.sourcePaths) {
+    resultObj.sourcePaths = (await promptForSourcePathsNew()).map(pathObj => pathObj.path);
+    if (resultObj.sourcePaths.length > 0) {
       resultObj.errors = resultObj.errors.filter(error => error !== 'missing source paths');
     }
   }
 
   if (resultObj.errors.includes('invalid source paths')) {
-    resultObj.sourcePaths = await promptForSourcePaths(resultObj.sourcePaths);
+    const sourcePathObjArr = resultObj.sourcePaths.map(path => {
+      return {
+        path: path,
+        isValid: checkIfPathIsValid(path, true),
+      }
+    });
+    resultObj.sourcePaths = (await promptForSourcePathsNew(sourcePathObjArr)).map(pathObj => pathObj.path);
 
     if (resultObj.sourcePaths.filter(path => !checkIfPathIsValid(path, true)).length === 0) {
       resultObj.errors = resultObj.errors.filter(error => error !== 'invalid source paths');
@@ -372,6 +442,33 @@ export const printResultOfWritingFile = (targetPath: string, err?: Error | null)
   } else {
     stdout.write(colorizeText('SUCCESS!', 'green') + '\n');
     stdout.write('Content has been written to the target file: ' + colorizeText(targetPath, 'green') + '\n\n');
+  }
+}
+
+const printInvalidAndValidSourcePathsAndPrompt = (invalidPaths: PathObj[], validPaths: PathObj[]): void => {
+  stdout.write(`You specified ${invalidPaths.length} invalid source paths. \n\n`);
+  for (const pathObj of invalidPaths) {
+    const outputStr = '   ' + pathObj.path + '\n'
+    stdout.write(colorizeText(outputStr, 'red'));
+  }
+
+  if (validPaths.length > 0) {
+    printValidSourcePaths(validPaths);
+
+    stdout.write('\nWould you like to correct the invalid paths?\n');
+    stdout.write('\nIf not just press enter to continue with the valid paths.\n');
+  } else {
+    stdout.write('\nYou did not specify valid source paths.\n');
+    stdout.write('Please enter the paths to the source files you want to index.\n');
+    stdout.write('Press enter again on a new line to confirm your entry. \n\n');
+  }
+}
+
+const printValidSourcePaths = (validPaths: PathObj[]): void => {
+  stdout.write('\nThe following valid source paths are stored.\n\n')
+  for (const pathObj of validPaths) {
+    const outputStr = '   ' + pathObj.path + '\n'
+    stdout.write(colorizeText(outputStr, 'green'));
   }
 }
 
