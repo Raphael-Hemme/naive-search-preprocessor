@@ -1,8 +1,6 @@
 import { argv, stdout, stdin } from 'process';
 import readline from 'readline';
 import { checkIfPathIsValid } from './file-io.js';
-import path from 'path';
-
 
 export type Mode = 'CLI' | 'AUTO' | 'HELP' | 'ERROR'; 
 
@@ -235,7 +233,7 @@ const getPromptTextForTargetPath = (invalidTargetPath: string | null): string =>
     case null:
       return '\nPlease enter the path to the target file. \n\n';
     case '':
-      return '\nYou did not specify a target path. \n\n';
+      return '\nYou did not specify a target path. Please enter the path to the target file.\n\n';
     default:
       return '\nYou specified an invalid target path. \n\n'
         + `  ${colorizeText(invalidTargetPath, 'red')}\n\n` 

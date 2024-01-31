@@ -27,15 +27,13 @@ export const cleanUpLineStr = (lineStr) => {
  * @returns {LineSplitObj[]} An array of objects, each containing the line number and an array of cleaned words.
  */
 export const generateCleanedLineSplitArr = (data) => {
-    let i = 1;
-    const newLineSplitArr = data.split("\n").map((l) => {
+    const newLineSplitArr = data.split("\n").map((l, i) => {
         const cleanedLineStr = cleanUpLineStr(l);
         const cleanedLineStrArr = cleanedLineStr.split(" ");
         const result = {
-            line: i,
+            line: i + 1,
             contentArr: cleanedLineStrArr,
         };
-        i += 1;
         return result;
     });
     return newLineSplitArr;
@@ -81,7 +79,7 @@ export const generatePreIndexObjArr = (cleanedLineSplitArr, sourceFilePath) => {
             ]);
         }
     }
-    // delete entries with emty strings (can happen when multiple space characters follow in a row and space is used as seperator)
+    // delete entries with empty strings (can happen when multiple space characters follow in a row and space is used as seperator)
     const cleanedIndexArr = indexArr.filter((el) => el[0]);
     const reducedArr = reduceToUniqueKeys(cleanedIndexArr);
     return reducedArr;

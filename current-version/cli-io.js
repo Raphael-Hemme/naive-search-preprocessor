@@ -179,7 +179,7 @@ const getPromptTextForTargetPath = (invalidTargetPath) => {
         case null:
             return '\nPlease enter the path to the target file. \n\n';
         case '':
-            return '\nYou did not specify a target path. \n\n';
+            return '\nYou did not specify a target path. Please enter the path to the target file.\n\n';
         default:
             return '\nYou specified an invalid target path. \n\n'
                 + `  ${colorizeText(invalidTargetPath, 'red')}\n\n`
