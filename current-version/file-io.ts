@@ -7,7 +7,7 @@ import {
 } from 'fs';
 
 import { printResultOfWritingFile } from './cli-io.js';
-import { FileContentObj, SearchIndexObj } from './data-processing.js';
+import { FileContentObj, SearchIndexEntryObj } from './data-processing.js';
 
 /**
  * Generates an array of paths to all the files in each of the directories
@@ -49,13 +49,19 @@ export const generateFileContentObjArr = (filePathArr: string[]): FileContentObj
  * @param searchIndexArr The search index object array to be written.
  * @param trgtP The target path of the JSON file.
  */
-export const writeSearchIndexObjToJsonFile = (searchIndexArr: SearchIndexObj[], trgtP: string) => {
+export const writeSearchIndexObjToJsonFile = (searchIndexArr: SearchIndexEntryObj[], trgtP: string) => {
     const cleanedTrgtP = trgtP
       .replace(/\.(?!\/|\.)[^/]*$/, '') // remove file extension if present but don't remove relative paths like ./ or ../
       .concat('.json'); // add .json file extension
 
     const jsonObj = JSON.stringify(searchIndexArr);
-    writeFile(cleanedTrgtP, jsonObj, 'utf8', (err: Error | null): void => printResultOfWritingFile(cleanedTrgtP, err));
+    
+    writeFile(
+      cleanedTrgtP,
+      jsonObj,
+      'utf8',
+      (err: Error | null): void => printResultOfWritingFile(cleanedTrgtP, err)
+    );
 };
 
 export const checkIfPathIsValid = (path: string, isSourceFlag: boolean): boolean => {

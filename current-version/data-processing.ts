@@ -13,13 +13,12 @@ export interface FileContentObj {
   filePath: string;
 }
 
-export type SearchIndexEntryArrFormat = [string, SourceEntryObj[]];
+export type SearchIndexEntryArr = [
+  string,
+  SourceEntryObj[]
+];
 
-export interface SearchIndexEntryObjFormat {
-  [key: string]: SourceEntryObj[];
-}
-
-export interface SearchIndexObj {
+export interface SearchIndexEntryObj {
   searchTerm: string;
   searchResults: SourceEntryObj[];
 }
@@ -91,11 +90,11 @@ export const cleanSearchEntryStr = (searchEntryStr: string): string => {
   return cleanedStr.toLowerCase();
 };
 
-export const generatePreIndexObjArr = (
+export const generatePreIndexArr = (
   cleanedLineSplitArr: LineSplitObj[],
   sourceFilePath: string
-): SearchIndexEntryArrFormat[] => {
-  const indexArr: SearchIndexEntryArrFormat[] = [];
+): SearchIndexEntryArr[] => {
+  const indexArr: SearchIndexEntryArr[] = [];
   for (const lineObj of cleanedLineSplitArr) {
     for (const contentE of lineObj.contentArr) {
       /*
@@ -126,14 +125,14 @@ export const generatePreIndexObjArr = (
 
 /**
  * Reduces an array of SearchIndexEntryArrFormat objects to an array of unique keys and their corresponding values.
- * @param {SearchIndexEntryArrFormat[]} inputArr - The input array to be processed.
+ * @param {SearchIndexEntryArr[]} inputArr - The input array to be processed.
  * @param {boolean} [isFullArr=false] - A boolean indicating whether the input array contains full arrays or sub-arrays.
- * @returns {SearchIndexEntryArrFormat[]} An array of unique keys and their corresponding values.
+ * @returns {SearchIndexEntryArr[]} An array of unique keys and their corresponding values.
  */
 export const reduceToUniqueKeys = (
-  inputArr: SearchIndexEntryArrFormat[],
+  inputArr: SearchIndexEntryArr[],
   isFullArr: boolean = false
-): SearchIndexEntryArrFormat[] => {
+): SearchIndexEntryArr[] => {
   let reducedArr = [];
   for (const preIndexArr of inputArr) {
     const duplicateKeyEntrysArr = inputArr.filter(
@@ -158,13 +157,14 @@ export const reduceToUniqueKeys = (
 
 export const generateArrOfPreIndexObjsFromFilePathArr = (
   fileContentArr: FileContentObj[]
-): SearchIndexEntryArrFormat[] => {
-  const resultArr: SearchIndexEntryArrFormat[] = [];
+): SearchIndexEntryArr[] => {
+  const resultArr: SearchIndexEntryArr[] = [];
   for (const file of fileContentArr) {
     const cleanedLineSplitArr = generateCleanedLineSplitArr(file.fileContent);
-    resultArr.push(
-      ...generatePreIndexObjArr(cleanedLineSplitArr, file.filePath)
-    );
+    resultArr.push(...generatePreIndexArr(
+      cleanedLineSplitArr,
+      file.filePath
+    ));
   }
 
   return resultArr;
@@ -172,15 +172,15 @@ export const generateArrOfPreIndexObjsFromFilePathArr = (
 
 /**
  * Removes duplicate objects from an array of SearchIndexEntryArrFormat objects.
- * @param {SearchIndexEntryArrFormat[]} inputArr - The input array to be processed.
- * @returns {SearchIndexEntryArrFormat[]} An array of SearchIndexEntryArrFormat objects with duplicate objects removed.
+ * @param {SearchIndexEntryArr[]} inputArr - The input array to be processed.
+ * @returns {SearchIndexEntryArr[]} An array of SearchIndexEntryArrFormat objects with duplicate objects removed.
  */
 export const removeDuplicateValueObjs = (
-  inputArr: SearchIndexEntryArrFormat[]
-): SearchIndexEntryArrFormat[] => {
+  inputArr: SearchIndexEntryArr[]
+): SearchIndexEntryArr[] => {
   return inputArr.map((el) => {
     const stringifiedValueArr = el[1].map((e) => JSON.stringify(e));
-    const filteredValueArr = Array.from(new Set(stringifiedValueArr)).map(
+    const filteredValueArr = [...new Set(stringifiedValueArr)].map(
       (el) => JSON.parse(el)
     );
     return [el[0], filteredValueArr];
@@ -188,13 +188,13 @@ export const removeDuplicateValueObjs = (
 };
 
 /**
- * Sorts an array of SearchIndexEntryArrFormat objects by the first element of each sub-array.
- * @param {SearchIndexEntryArrFormat[]} inputArr - The input array to be sorted.
- * @returns {SearchIndexEntryArrFormat[]} A sorted array of SearchIndexEntryArrFormat objects.
+ * Sorts an array of SearchIndexEntryArr arrays by the first element of each sub-array which is the key / search term.
+ * @param {SearchIndexEntryArr[]} inputArr - The input array to be sorted.
+ * @returns {SearchIndexEntryArr[]} A sorted array of SearchIndexEntryArrFormat objects.
  */
 export const sortFinalIndexArr = (
-  inputArr: SearchIndexEntryArrFormat[]
-): SearchIndexEntryArrFormat[] => {
+  inputArr: SearchIndexEntryArr[]
+): SearchIndexEntryArr[] => {
   const sortedArr = inputArr.sort((a, b) => {
     if (a[0] > b[0]) {
       return 1;

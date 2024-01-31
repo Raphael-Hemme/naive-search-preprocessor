@@ -14,8 +14,8 @@ import {
   reduceToUniqueKeys,
   removeDuplicateValueObjs,
   sortFinalIndexArr,
-  SearchIndexEntryArrFormat,
-  SearchIndexObj,
+  SearchIndexEntryArr,
+  SearchIndexEntryObj,
   FileContentObj,
   generateArrOfPreIndexObjsFromFilePathArr,
 } from "./data-processing.js";
@@ -50,12 +50,12 @@ const handleResultOfUserInput = (userInputResultObj: UserInputResultObj) => {
  * Sorts the cleaned pre-object array and writes the resulting search index to a JSON file.
  * @param cleanedPreObjArr - The cleaned pre-object array to sort and write to a JSON file.
  */
-const sortAndWriteIndex = (cleanedPreObjArr: SearchIndexEntryArrFormat[]) => {
-  const sortedCleanedPreObjArr: SearchIndexEntryArrFormat[] =
+const sortAndWriteIndex = (cleanedPreObjArr: SearchIndexEntryArr[]) => {
+  const sortedCleanedPreObjArr: SearchIndexEntryArr[] =
     sortFinalIndexArr(cleanedPreObjArr);
 
-  const indexArr: SearchIndexObj[] = sortedCleanedPreObjArr.map(
-    (el: SearchIndexEntryArrFormat) => {
+  const indexArr: SearchIndexEntryObj[] = sortedCleanedPreObjArr.map(
+    (el: SearchIndexEntryArr) => {
       return {
         searchTerm: el[0],
         searchResults: el[1],
@@ -97,7 +97,7 @@ const main = () => {
         printRemovingDuplicatesMsg();
         return removeDuplicateValueObjs(uniqueKeysArr);
       }),
-      tap((cleanedPreObjArr: SearchIndexEntryArrFormat[]): void =>
+      tap((cleanedPreObjArr: SearchIndexEntryArr[]): void =>
         sortAndWriteIndex(cleanedPreObjArr)
       )
     )

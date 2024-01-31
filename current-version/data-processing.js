@@ -57,7 +57,7 @@ export const cleanSearchEntryStr = (searchEntryStr) => {
     }
     return cleanedStr.toLowerCase();
 };
-export const generatePreIndexObjArr = (cleanedLineSplitArr, sourceFilePath) => {
+export const generatePreIndexArr = (cleanedLineSplitArr, sourceFilePath) => {
     const indexArr = [];
     for (const lineObj of cleanedLineSplitArr) {
         for (const contentE of lineObj.contentArr) {
@@ -86,9 +86,9 @@ export const generatePreIndexObjArr = (cleanedLineSplitArr, sourceFilePath) => {
 };
 /**
  * Reduces an array of SearchIndexEntryArrFormat objects to an array of unique keys and their corresponding values.
- * @param {SearchIndexEntryArrFormat[]} inputArr - The input array to be processed.
+ * @param {SearchIndexEntryArr[]} inputArr - The input array to be processed.
  * @param {boolean} [isFullArr=false] - A boolean indicating whether the input array contains full arrays or sub-arrays.
- * @returns {SearchIndexEntryArrFormat[]} An array of unique keys and their corresponding values.
+ * @returns {SearchIndexEntryArr[]} An array of unique keys and their corresponding values.
  */
 export const reduceToUniqueKeys = (inputArr, isFullArr = false) => {
     let reducedArr = [];
@@ -113,26 +113,26 @@ export const generateArrOfPreIndexObjsFromFilePathArr = (fileContentArr) => {
     const resultArr = [];
     for (const file of fileContentArr) {
         const cleanedLineSplitArr = generateCleanedLineSplitArr(file.fileContent);
-        resultArr.push(...generatePreIndexObjArr(cleanedLineSplitArr, file.filePath));
+        resultArr.push(...generatePreIndexArr(cleanedLineSplitArr, file.filePath));
     }
     return resultArr;
 };
 /**
  * Removes duplicate objects from an array of SearchIndexEntryArrFormat objects.
- * @param {SearchIndexEntryArrFormat[]} inputArr - The input array to be processed.
- * @returns {SearchIndexEntryArrFormat[]} An array of SearchIndexEntryArrFormat objects with duplicate objects removed.
+ * @param {SearchIndexEntryArr[]} inputArr - The input array to be processed.
+ * @returns {SearchIndexEntryArr[]} An array of SearchIndexEntryArrFormat objects with duplicate objects removed.
  */
 export const removeDuplicateValueObjs = (inputArr) => {
     return inputArr.map((el) => {
         const stringifiedValueArr = el[1].map((e) => JSON.stringify(e));
-        const filteredValueArr = Array.from(new Set(stringifiedValueArr)).map((el) => JSON.parse(el));
+        const filteredValueArr = [...new Set(stringifiedValueArr)].map((el) => JSON.parse(el));
         return [el[0], filteredValueArr];
     });
 };
 /**
- * Sorts an array of SearchIndexEntryArrFormat objects by the first element of each sub-array.
- * @param {SearchIndexEntryArrFormat[]} inputArr - The input array to be sorted.
- * @returns {SearchIndexEntryArrFormat[]} A sorted array of SearchIndexEntryArrFormat objects.
+ * Sorts an array of SearchIndexEntryArr arrays by the first element of each sub-array which is the key / search term.
+ * @param {SearchIndexEntryArr[]} inputArr - The input array to be sorted.
+ * @returns {SearchIndexEntryArr[]} A sorted array of SearchIndexEntryArrFormat objects.
  */
 export const sortFinalIndexArr = (inputArr) => {
     const sortedArr = inputArr.sort((a, b) => {
