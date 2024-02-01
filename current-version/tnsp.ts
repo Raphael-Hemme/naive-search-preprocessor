@@ -1,4 +1,13 @@
-import { tap, of, from, map, switchMap, Subject, takeUntil, filter } from "rxjs";
+import { 
+  tap,
+  of,
+  from,
+  map,
+  switchMap,
+  Subject,
+  takeUntil,
+  filter
+} from "rxjs";
 
 import {
   printFrontMatter,
@@ -13,11 +22,11 @@ import {
 import {
   reduceToUniqueKeys,
   removeDuplicateValueObjs,
-  sortFinalIndexArr,
+  sortCleanedIndexArr,
   SearchIndexEntryArr,
-  SearchIndexEntryObj,
   FileContentObj,
-  generateArrOfPreIndexObjsFromFilePathArr,
+  generateRawIndex,
+  reformatIndex
 } from "./data-processing.js";
 
 import {
@@ -46,27 +55,6 @@ const handleResultOfUserInput = (userInputResultObj: UserInputResultObj) => {
   }
 };
 
-/**
- * Sorts the cleaned pre-object array and writes the resulting search index to a JSON file.
- * @param cleanedPreObjArr - The cleaned pre-object array to sort and write to a JSON file.
- */
-const sortAndWriteIndex = (cleanedPreObjArr: SearchIndexEntryArr[]) => {
-  const sortedCleanedPreObjArr: SearchIndexEntryArr[] =
-    sortFinalIndexArr(cleanedPreObjArr);
-
-  const indexArr: SearchIndexEntryObj[] = sortedCleanedPreObjArr.map(
-    (el: SearchIndexEntryArr) => {
-      return {
-        searchTerm: el[0],
-        searchResults: el[1],
-      };
-    }
-  );
-
-  writeSearchIndexObjToJsonFile(indexArr, targetPath);
-  stopSignal$$.next("STOP");
-};
-
 const main = () => {
   of("START")
     .pipe(
@@ -85,21 +73,26 @@ const main = () => {
       map((filePathArr: string[]): FileContentObj[] =>
         generateFileContentObjArr(filePathArr)
       ),
-      map((fileContentArr: FileContentObj[]) => {
+      map((fileContentArr: FileContentObj[]): SearchIndexEntryArr[] => {
         printPreprocessingFilesMsg();
-        return generateArrOfPreIndexObjsFromFilePathArr(fileContentArr);
+        return generateRawIndex(fileContentArr);
       }),
-      map((preIndexObjArr) => {
+      map((preIndexObjArr): SearchIndexEntryArr[] => {
         printProcessingMsg();
         return reduceToUniqueKeys(preIndexObjArr, true);
       }),
-      map((uniqueKeysArr) => {
+      map((uniqueKeysArr): SearchIndexEntryArr[] => {
         printRemovingDuplicatesMsg();
         return removeDuplicateValueObjs(uniqueKeysArr);
       }),
-      tap((cleanedPreObjArr: SearchIndexEntryArr[]): void =>
-        sortAndWriteIndex(cleanedPreObjArr)
-      )
+      map((cleanedIndexArr: SearchIndexEntryArr[]): SearchIndexEntryArr[] => {
+        return sortCleanedIndexArr(cleanedIndexArr)
+      }),
+      tap((cleanedAndSortedIndexArr: SearchIndexEntryArr[]): void => {
+        const finalIndex = reformatIndex(cleanedAndSortedIndexArr);
+        writeSearchIndexObjToJsonFile(finalIndex, targetPath);
+        stopSignal$$.next("STOP");
+      })
     )
     .subscribe();
 };

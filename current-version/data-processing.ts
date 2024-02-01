@@ -155,7 +155,7 @@ export const reduceToUniqueKeys = (
   return reducedArr;
 };
 
-export const generateArrOfPreIndexObjsFromFilePathArr = (
+export const generateRawIndex = (
   fileContentArr: FileContentObj[]
 ): SearchIndexEntryArr[] => {
   const resultArr: SearchIndexEntryArr[] = [];
@@ -192,7 +192,7 @@ export const removeDuplicateValueObjs = (
  * @param {SearchIndexEntryArr[]} inputArr - The input array to be sorted.
  * @returns {SearchIndexEntryArr[]} A sorted array of SearchIndexEntryArrFormat objects.
  */
-export const sortFinalIndexArr = (
+export const sortCleanedIndexArr = (
   inputArr: SearchIndexEntryArr[]
 ): SearchIndexEntryArr[] => {
   const sortedArr = inputArr.sort((a, b) => {
@@ -206,4 +206,17 @@ export const sortFinalIndexArr = (
   });
 
   return sortedArr;
+};
+
+export const reformatIndex = (
+  cleanedAndSortedIndex: SearchIndexEntryArr[]
+): SearchIndexEntryObj[] => {
+  return cleanedAndSortedIndex
+    .map((el: SearchIndexEntryArr) => {
+        return {
+          searchTerm: el[0],
+          searchResults: el[1],
+        };
+      }
+    );
 };

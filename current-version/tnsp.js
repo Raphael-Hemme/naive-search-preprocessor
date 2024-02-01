@@ -1,6 +1,6 @@
 import { tap, of, from, map, switchMap, Subject, takeUntil, filter } from "rxjs";
 import { printFrontMatter, printFilePaths, printHelp, printError, printPreprocessingFilesMsg, printProcessingMsg, printRemovingDuplicatesMsg, } from "./cli-io.js";
-import { reduceToUniqueKeys, removeDuplicateValueObjs, sortFinalIndexArr, generateArrOfPreIndexObjsFromFilePathArr, } from "./data-processing.js";
+import { reduceToUniqueKeys, removeDuplicateValueObjs, sortCleanedIndexArr, generateRawIndex, reformatIndex } from "./data-processing.js";
 import { generateFilePathArr, generateFileContentObjArr, writeSearchIndexObjToJsonFile, } from "./file-io.js";
 import { processArgsAndExecuteMode } from "./cli-io.js";
 let sourcePaths = [];
@@ -20,21 +20,6 @@ const handleResultOfUserInput = (userInputResultObj) => {
         targetPath = userInputResultObj.targetPath;
     }
 };
-/**
- * Sorts the cleaned pre-object array and writes the resulting search index to a JSON file.
- * @param cleanedPreObjArr - The cleaned pre-object array to sort and write to a JSON file.
- */
-const sortAndWriteIndex = (cleanedPreObjArr) => {
-    const sortedCleanedPreObjArr = sortFinalIndexArr(cleanedPreObjArr);
-    const indexArr = sortedCleanedPreObjArr.map((el) => {
-        return {
-            searchTerm: el[0],
-            searchResults: el[1],
-        };
-    });
-    writeSearchIndexObjToJsonFile(indexArr, targetPath);
-    stopSignal$$.next("STOP");
-};
 const main = () => {
     of("START")
         .pipe(takeUntil(stopSignal$$), tap(() => printFrontMatter()), switchMap(() => from(processArgsAndExecuteMode())), tap((userInputResultObj) => handleResultOfUserInput(userInputResultObj)), filter((userInputResultObj) => {
@@ -42,14 +27,20 @@ const main = () => {
             || userInputResultObj.mode === 'CLI';
     }), map(() => generateFilePathArr(sourcePaths)), tap((filePathArr) => printFilePaths(filePathArr)), map((filePathArr) => generateFileContentObjArr(filePathArr)), map((fileContentArr) => {
         printPreprocessingFilesMsg();
-        return generateArrOfPreIndexObjsFromFilePathArr(fileContentArr);
+        return generateRawIndex(fileContentArr);
     }), map((preIndexObjArr) => {
         printProcessingMsg();
         return reduceToUniqueKeys(preIndexObjArr, true);
     }), map((uniqueKeysArr) => {
         printRemovingDuplicatesMsg();
         return removeDuplicateValueObjs(uniqueKeysArr);
-    }), tap((cleanedPreObjArr) => sortAndWriteIndex(cleanedPreObjArr)))
+    }), map((cleanedIndexArr) => {
+        return sortCleanedIndexArr(cleanedIndexArr);
+    }), tap((cleanedAndSortedIndexArr) => {
+        const finalIndex = reformatIndex(cleanedAndSortedIndexArr);
+        writeSearchIndexObjToJsonFile(finalIndex, targetPath);
+        stopSignal$$.next("STOP");
+    }))
         .subscribe();
 };
 main();
