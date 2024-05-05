@@ -32,6 +32,7 @@ const matchMultipleDotRegEx = /\.{2,}/g;
 const cleanSearchEntryStrRegEx = /[^a-zA-Z0-9]/g;
 
 // ------ FUNCTION DEFINITIONS ------
+
 /**
  * Cleans up a string by replacing symbols with spaces, removing extra spaces, and trimming the result.
  * @param {string} lineStr - The string to clean up.

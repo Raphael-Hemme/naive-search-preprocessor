@@ -1,15 +1,9 @@
+// ------ REGEX DEFINITIONS ------
 const matchSymbolsRegEx = /[^a-zA-Z0-9. ]/g;
 const matchMultipleSpaceRegEx = /\s{2,}/g;
 const matchMultipleDotRegEx = /\.{2,}/g;
 const cleanSearchEntryStrRegEx = /[^a-zA-Z0-9]/g;
-// currently not used - but might be useful later
-const generatePartialEntries = (entry) => {
-    const partialsArr = [];
-    for (let strLen = entry.length; strLen > 0; strLen--) {
-        partialsArr.push(entry.slice(0, strLen));
-    }
-    return partialsArr;
-};
+// ------ FUNCTION DEFINITIONS ------
 /**
  * Cleans up a string by replacing symbols with spaces, removing extra spaces, and trimming the result.
  * @param {string} lineStr - The string to clean up.

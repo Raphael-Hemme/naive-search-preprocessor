@@ -5,9 +5,11 @@ import {
   statSync,
   writeFile 
 } from 'fs';
+import { gzipSync } from 'fflate';
 
 import { printResultOfWritingFile } from './cli-io.js';
 import { FileContentObj, SearchIndexEntryObj } from './data-processing.js';
+import { gzip } from 'zlib';
 
 /**
  * Generates an array of paths to all the files in each of the directories
@@ -49,19 +51,43 @@ export const generateFileContentObjArr = (filePathArr: string[]): FileContentObj
  * @param searchIndexArr The search index object array to be written.
  * @param trgtP The target path of the JSON file.
  */
-export const writeSearchIndexObjToJsonFile = (searchIndexArr: SearchIndexEntryObj[], trgtP: string) => {
+export const writeSearchIndexObjToJsonFile = (searchIndexArr: SearchIndexEntryObj[], trgtP: string, useCompression: boolean = true) => {
+    const fileSuffix = useCompression ? '.gz' : '.json';
     const cleanedTrgtP = trgtP
       .replace(/\.(?!\/|\.)[^/]*$/, '') // remove file extension if present but don't remove relative paths like ./ or ../
-      .concat('.json'); // add .json file extension
+      .concat(fileSuffix); // add the correct file extension
 
     const jsonObj = JSON.stringify(searchIndexArr);
+    let fileContent;
+
+    if (!useCompression) {
+      fileContent = jsonObj;
+    } else {
+      // Convert string to Buffer
+      const buffer = Buffer.from(jsonObj, 'utf8');
+      // Convert Buffer to Uint8Array
+      const u8Arr = new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+
+      const timeStr = new Date().toLocaleString(undefined, {
+        day:    'numeric',
+        month:  'numeric',
+        year:   'numeric',
+        hour:   '2-digit',
+        minute: '2-digit',
+      });
+
+      fileContent = gzipSync(u8Arr, {
+        filename: 'search-index.json',
+        mtime: timeStr
+      });
+    }
     
     writeFile(
       cleanedTrgtP,
-      jsonObj,
+      fileContent,
       'utf8',
       (err: Error | null): void => printResultOfWritingFile(cleanedTrgtP, err)
-    );
+    ); 
 };
 
 export const checkIfPathIsValid = (path: string, isSourceFlag: boolean): boolean => {

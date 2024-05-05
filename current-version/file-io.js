@@ -1,4 +1,5 @@
 import { existsSync, readFileSync, readdirSync, statSync, writeFile } from 'fs';
+import { gzipSync } from 'fflate';
 import { printResultOfWritingFile } from './cli-io.js';
 /**
  * Generates an array of paths to all the files in each of the directories
@@ -38,12 +39,34 @@ export const generateFileContentObjArr = (filePathArr) => {
  * @param searchIndexArr The search index object array to be written.
  * @param trgtP The target path of the JSON file.
  */
-export const writeSearchIndexObjToJsonFile = (searchIndexArr, trgtP) => {
+export const writeSearchIndexObjToJsonFile = (searchIndexArr, trgtP, useCompression = true) => {
+    const fileSuffix = useCompression ? '.gz' : '.json';
     const cleanedTrgtP = trgtP
         .replace(/\.(?!\/|\.)[^/]*$/, '') // remove file extension if present but don't remove relative paths like ./ or ../
-        .concat('.json'); // add .json file extension
+        .concat(fileSuffix); // add the correct file extension
     const jsonObj = JSON.stringify(searchIndexArr);
-    writeFile(cleanedTrgtP, jsonObj, 'utf8', (err) => printResultOfWritingFile(cleanedTrgtP, err));
+    let fileContent;
+    if (!useCompression) {
+        fileContent = jsonObj;
+    }
+    else {
+        // Convert string to Buffer
+        const buffer = Buffer.from(jsonObj, 'utf8');
+        // Convert Buffer to Uint8Array
+        const u8Arr = new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+        const timeStr = new Date().toLocaleString(undefined, {
+            day: 'numeric',
+            month: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+        fileContent = gzipSync(u8Arr, {
+            filename: 'search-index.json',
+            mtime: timeStr
+        });
+    }
+    writeFile(cleanedTrgtP, fileContent, 'utf8', (err) => printResultOfWritingFile(cleanedTrgtP, err));
 };
 export const checkIfPathIsValid = (path, isSourceFlag) => {
     // early return if path is empty
